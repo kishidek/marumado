@@ -16,14 +16,15 @@
         <p id="greeting"></p>
       </header>
 
-      <section class="ask" id="ask" aria-live="polite"></section>
+      <!-- Both start hidden: they appear only once stored data has loaded (no empty flash). -->
+      <section class="ask gone" id="ask" aria-live="polite"></section>
 
-      <section class="needs" id="needs" aria-labelledby="needsTitle" tabindex="0">
+      <section class="needs" id="needs" aria-labelledby="needsTitle" tabindex="0" hidden>
         <h2 id="needsTitle"><span id="plantName"></span> <small id="plantMeta"></small><span class="minis" id="needsMini" aria-hidden="true"></span></h2>
         <ul id="needsList"></ul>
       </section>
 
-      <button type="button" class="icon-btn settings-btn" id="openSettings" aria-label="Settings"></button>
+      <button type="button" class="icon-btn settings-btn" id="openSettings" aria-label="Settings" hidden></button>
     </main>
 
     <div class="toast" id="toast" role="status"></div>

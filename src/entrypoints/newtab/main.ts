@@ -59,7 +59,7 @@ function updatePlant() {
   const key = `${days.toFixed(1)}|${health.toFixed(2)}`;
   if (key === plantKey) return;
   plantKey = key;
-  view.setPlant(buildAjisai({ days, health }));
+  view.setPlant(buildAjisai({ days, health }), days);
   requestRender();
 }
 
@@ -334,7 +334,6 @@ mountDevControls();
 
 resize();
 tick();
-updatePlant();
 requestAnimationFrame(loop);
 
 watchAll(() => void reload());

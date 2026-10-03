@@ -7,7 +7,8 @@ export interface WindowScene {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   setHour(hour: number): void;
-  setPlant(build: AjisaiBuild): void;
+  /** `days` = days of care; drives the framing so the camera pulls back as the plant grows. */
+  setPlant(build: AjisaiBuild, days: number): void;
   resize(width: number, height: number): void;
 }
 
@@ -136,20 +137,27 @@ export function createWindowScene(): WindowScene {
   scene.add(lamp);
 
   let plant: AjisaiBuild | null = null;
+  let growthDays = 0;
   let size = { w: 1, h: 1 };
+
+  /** Close-up on the sprout at first; the full room once the plant is ~8 months of care. */
+  const CLOSE = { halfH: 0.4, below: 0.16, x: PLANT_SPOT.x, minHalfW: 0.32 };
+  const ROOM = { halfH: 0.7, below: 0.3, x: MARUMADO.x - 0.06, minHalfW: MARUMADO.r + 0.12 };
+  const FULL_ROOM_AT_DAYS = 240;
 
   function frame() {
     camera.aspect = size.w / size.h;
     const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const plantTop = plant ? plant.height : 0.2;
-    // Half the visible height at the wall plane: hug the plant, never tighter than the sill.
-    // Always show the whole round window; zoom out further only if the plant outgrows it.
-    // Frame the room like the reference: beam on top, cabinet at the bottom.
-    let halfH = Math.max(0.7, (plantTop + 0.45) / 2);
-    // Narrow (portrait) screens: keep the window's width in view too.
-    halfH = Math.max(halfH, (MARUMADO.r + 0.12) / camera.aspect);
+    const t = THREE.MathUtils.smoothstep(growthDays, 0, FULL_ROOM_AT_DAYS);
+    const below = THREE.MathUtils.lerp(CLOSE.below, ROOM.below, t);
+    let halfH = THREE.MathUtils.lerp(CLOSE.halfH, ROOM.halfH, t);
+    // Never crop the plant: the view's top (2·halfH − below) stays above it.
+    const plantTop = plant ? plant.height : 0.1;
+    halfH = Math.max(halfH, (plantTop + 0.1 + below) / 2);
+    // Narrow (portrait) screens: keep enough width in view.
+    halfH = Math.max(halfH, THREE.MathUtils.lerp(CLOSE.minHalfW, ROOM.minHalfW, t) / camera.aspect);
     const dist = halfH / tan;
-    target.set(MARUMADO.x - 0.06, halfH - 0.3, 0);
+    target.set(THREE.MathUtils.lerp(CLOSE.x, ROOM.x, t), halfH - below, 0);
     camera.position.set(target.x, target.y + dist * 0.12, dist);
     camera.lookAt(target);
     camera.updateProjectionMatrix();
@@ -181,7 +189,8 @@ export function createWindowScene(): WindowScene {
       // Paper is back-lit by the sky outside.
       shojiMat.emissive.copy(p.bottom).multiplyScalar(0.35 * (1 - p.lamp) + 0.05);
     },
-    setPlant(build) {
+    setPlant(build, days) {
+      growthDays = days;
       if (plant) {
         scene.remove(plant.group);
         plant.dispose();
