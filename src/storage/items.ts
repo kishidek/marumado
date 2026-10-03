@@ -11,6 +11,13 @@ export const eventsItem = storage.defineItem<AnswerEvent[]>('local:events', { fa
 /** UI memory that isn't plant data (e.g. the last day we nagged about backups). */
 export const backupReminderItem = storage.defineItem<string | null>('local:ui:backupReminderDay', { fallback: null });
 export const vacationReminderItem = storage.defineItem<string | null>('local:ui:vacationReminderDay', { fallback: null });
+/** Local-only diagnostics: recent uncaught errors, shipped inside backups so users can share them. */
+export interface LoggedError {
+  ts: number;
+  message: string;
+  version: string;
+}
+export const errorsItem = storage.defineItem<LoggedError[]>('local:diagnostics:errors', { fallback: [] });
 const previousItem = storage.defineItem<unknown>('local:backup:previous', { fallback: null });
 
 const LOCK = 'marumado-write';

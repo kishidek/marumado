@@ -8,6 +8,7 @@ import { skyAt } from '../../scene/sky';
 import { createGlHost } from '../../scene/gl-host';
 import { createWindowScene } from '../../scene/window-scene';
 import { shiftBack, simulateDays, type Pattern } from '../../engine/simulate';
+import { installErrorLog, logError } from '../../storage/error-log';
 import { appendEvent, backupReminderItem, vacationReminderItem, clearAll, eventsItem, plant, replaceAll, settingsItem, watchAll } from '../../storage/items';
 import { $, el, icon, ordinal, setBackgroundInert, toast } from '../../ui/dom';
 import { initHelp } from '../../ui/help';
@@ -283,6 +284,7 @@ async function answer(habitId: string, kind: Answer) {
 
 // --- Data flow ---------------------------------------------------------------------------
 function storageFailed(err: unknown) {
+  void logError(err);
   const msg = String(err);
   toast(msg.includes('context invalidated') ? 'Marumado was updated. Reload this tab.' : 'Couldn’t save. Reload this tab and try again.');
 }
@@ -457,6 +459,7 @@ if (DEV) {
 }
 
 // --- Boot --------------------------------------------------------------------------------
+installErrorLog();
 $('openSettings').append(icon(SettingsIcon, 20));
 $('openSettings').addEventListener('click', () => openSettings(true));
 initSettings({ getSettings: () => settings, getEvents: () => events });
@@ -472,5 +475,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') void reload();
 });
 setInterval(render, 30_000);
-setTimeout(() => $('needs').classList.add('collapsed'), 6000);
+// The plant panel shows itself briefly, then folds into a pill (right away on small screens).
+const smallScreen = innerWidth <= 760 || innerHeight <= 700;
+setTimeout(() => $('needs').classList.add('collapsed'), smallScreen ? 0 : 6000);
 void reload();

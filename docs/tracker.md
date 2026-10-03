@@ -15,7 +15,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | 4 | Wire UI to engine | ✅ | Onboarding, questions, plant, settings, rename, growth-based camera |
 | 5 | Resilience | ✅ | GL host (release when hidden, recover on return, no steal loop), CSS fallback window, early boot background, canvas fade-in. Release-when-hidden verified manually only (headless reports every tab visible) |
 | 6 | Backup | ✅ | Export, validated restore, pre-restore snapshot, backup reminder; E2E round-trip + corrupt file |
-| 7 | QA matrix | ✅ | Playwright suite in repo (`npm run test:e2e`): 10/10 |
+| 7 | QA matrix | ✅ | Playwright suite in repo (`npm run test:e2e`): 15/15 |
 | 8 | Store | ⏸️ | Postponed (private use, unpacked) |
 | 9 | Deck videos | ✅ | `npm run render:deck` → `deck-videos/` (1080p H.264, 8 s each: growth 30 d, neglect, recovery). Not committed (large) |
 
@@ -32,7 +32,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Time bugs (DST, overnight, clock) | ✅ | Vitest × 3 time zones |
 | Answer farming | ✅ | Vitest |
 | Bad restore file | ✅ | Vitest, 6 cases |
-| Context invalidated after update | 🟡 | Toast exists; untested |
+| Context invalidated after update | ✅ | Not possible for an extension page: on update Chrome swaps open Marumado tabs for its default new tab (E2E). Data survives (Chrome storage; confirmed by reloading in Edge) |
 | MV3 CSP | ✅ | E2E asserts no console errors on the production build |
 
 ### P1
@@ -59,7 +59,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Event log growth over years | ⬜ | Compact days older than 90 into daily summaries (not urgent: ~0.7 MB/year) |
 | Vacation mode left on forever | ✅ | Toast once a day after 14 days (E2E) |
 | Very old plants | 🟡 | Leaves/florets capped; garden graduation is post-MVP |
-| Browser zoom 50–200 %, narrow windows | ⬜ | Responsive pass + screenshots |
+| Browser zoom 50–200 %, narrow windows | ✅ | Found + fixed: at 200 % / short windows the plant panel covered the Yes/No buttons. Left column now stacks (flex); panel starts collapsed on small screens. E2E checks no overlap at 720×450 and 480×820 |
 | `three` bundle parse time | ✅ | `marumado:first-frame` mark. Apple M1 (Metal): 77–120 ms typical, ~1.3 s for the first tab of a browser session (process + shader warm-up). Software GL: 0.9–2.9 s |
 
 ## Missing pieces (plan §6)
@@ -67,10 +67,10 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Item | Status | Notes |
 |---|---|---|
 | "Yes" feedback animation on the plant | ✅ | Water: droplets fall into the pot; other habits: golden glints rise; plant sways; health eases instead of jumping (also on "Not yet"). Off with reduce motion |
-| Local error log in the export | ⬜ | Lets testers send crashes voluntarily (no telemetry) |
+| Local error log in the export | ✅ | Last 50 uncaught errors in `local:diagnostics:errors`; count + Clear in Settings; included in backups (E2E) |
 | Rename + start over in Settings | ✅ | |
 | Beta channel (unlisted store) | ⏸️ | Store postponed |
-| Minimum Chrome version | ⬜ | Declare in manifest (WebGL2 + ES2022) |
+| Minimum Chrome version | ✅ | `minimum_chrome_version: 111` (CSS color-mix; also covers inert, structuredClone, WebGL2) |
 
 ## Post-MVP
 
@@ -81,6 +81,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-03: quick batch: minimum Chrome 111, local error log in backups, update behaviour verified (no stale context possible), zoom/narrow layout bug fixed. E2E 15/15.
 
 - 2026-10-03: deck videos rendered; name ellipsis; vacation nudge; reminders now marked only once shown (bug); first-frame timing measured.
 

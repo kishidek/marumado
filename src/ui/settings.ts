@@ -2,7 +2,7 @@ import { ShieldCheck, X } from 'lucide';
 import { makeBackup, parseBackup } from '../engine/backup';
 import { CATALOG, catalogHabit, INTERVAL_OPTIONS, intervalLabel, MAX_HABITS, MIN_HABITS } from '../engine/catalog';
 import type { AnswerEvent, Settings } from '../engine/types';
-import { clearAll, replaceAll, saveSettings } from '../storage/items';
+import { clearAll, errorsItem, replaceAll, saveSettings } from '../storage/items';
 import { $, el, icon, relativeTime, setBackgroundInert, toast } from './dom';
 import { habitIcon } from './icons';
 import { daysPicker, hoursPicker } from './pickers';
@@ -41,9 +41,10 @@ function toggleRow(label: string, sub: string, checked: boolean, onChange: (on: 
   return el('label', { className: 'setting-row' }, el('span', { className: 'grow' }, label, el('small', {}, sub)), input);
 }
 
-export function downloadBackup(settings: Settings, events: AnswerEvent[]) {
+export async function downloadBackup(settings: Settings, events: AnswerEvent[]) {
   const now = Date.now();
-  const blob = new Blob([JSON.stringify(makeBackup(settings, events, now), null, 2)], { type: 'application/json' });
+  const diagnostics = await errorsItem.getValue().catch(() => []);
+  const blob = new Blob([JSON.stringify(makeBackup(settings, events, now, diagnostics), null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const date = new Date(now).toISOString().slice(0, 10);
   const a = el('a', { href: url, download: `marumado-${settings.plantName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${date}.json` });
@@ -120,8 +121,8 @@ function render() {
   // --- Data
   const onVacation = s.vacations.some((v) => v.to === null);
   const exportBtn = el('button', { type: 'button', className: 'btn primary' }, 'Export backup');
-  exportBtn.addEventListener('click', () => {
-    downloadBackup(current(), ctx.getEvents());
+  exportBtn.addEventListener('click', async () => {
+    await downloadBackup(current(), ctx.getEvents());
     toast('Backup downloaded.');
   });
   const file = el('input', { type: 'file', accept: 'application/json,.json', hidden: true });
@@ -146,11 +147,12 @@ function render() {
   startOver.addEventListener('click', async () => {
     const cur = current();
     if (!confirm(`Start over with a new seed?\n\n${cur.plantName}'s history will be erased from this browser.`)) return;
-    if (confirm('Download a backup of the current plant first?')) downloadBackup(cur, ctx.getEvents());
+    if (confirm('Download a backup of the current plant first?')) await downloadBackup(cur, ctx.getEvents());
     await clearAll();
     openSettings(false);
   });
 
+  const diagnosticsRow = el('div', { className: 'setting-row', id: 'diagnostics' });
   $('settingsBody').replaceChildren(
     el('h3', {}, 'Your plant'),
     el('div', { className: 'setting-row' }, nameInput, renameBtn),
@@ -184,6 +186,27 @@ function render() {
       { className: 'note' },
       `Last backup: ${s.lastExportAt ? relativeTime(Date.now() - s.lastExportAt) : 'never'}. If you uninstall the extension or clear browser data, ${s.plantName} is gone unless you have a backup.`,
     ),
+    diagnosticsRow,
     el('div', { className: 'setting-row' }, el('span', { className: 'grow' }, 'Start over', el('small', {}, 'Erase this plant and plant a new seed.')), startOver),
+  );
+  void paintDiagnostics(diagnosticsRow);
+}
+
+/** Shows how many problems were recorded locally, with a way to clear them. */
+async function paintDiagnostics(row: HTMLElement) {
+  const errors = await errorsItem.getValue().catch(() => []);
+  const clear = el('button', { type: 'button', className: 'btn ghost', disabled: errors.length === 0 }, 'Clear');
+  clear.addEventListener('click', async () => {
+    await errorsItem.setValue([]);
+    void paintDiagnostics(row);
+  });
+  row.replaceChildren(
+    el(
+      'span',
+      { className: 'grow' },
+      'Diagnostics',
+      el('small', {}, errors.length ? `${errors.length} problem${errors.length > 1 ? 's' : ''} recorded on this browser. Included in backups, so you can share them if something breaks.` : 'No problems recorded.'),
+    ),
+    clear,
   );
 }

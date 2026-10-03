@@ -20,7 +20,10 @@ export async function newTab(context: BrowserContext) {
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   await page.goto('chrome://newtab/');
-  await page.waitForURL(/^chrome-extension:\/\/.+\/newtab\.html/);
+  await page.waitForURL(/^chrome-extension:\/\/.+\/newtab\.html/, { timeout: 5000 }).catch(async (e) => {
+    await page.close();
+    throw e;
+  });
   await expect(page.locator('#scene')).toHaveAttribute('data-gl', /.+/);
   return Object.assign(page, { errors });
 }

@@ -128,9 +128,7 @@ button {
 
 /* --- Clock --------------------------------------------------------------------------- */
 .clock {
-  position: absolute;
-  top: 28px;
-  left: 32px;
+  flex: none;
   pointer-events: none;
   text-shadow: var(--text-glow);
 }
@@ -156,10 +154,24 @@ button {
 }
 
 /* --- Glass cards ----------------------------------------------------------------------- */
+.left {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(416px, 100vw);
+  padding: 28px 32px;
+  pointer-events: none;
+}
+
+.left > .ask,
+.needs {
+  pointer-events: auto;
+}
+
 .ask,
 .needs {
-  position: absolute;
-  left: 32px;
   width: min(352px, calc(100vw - 64px));
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -170,7 +182,8 @@ button {
 
 /* --- Question card --------------------------------------------------------------------- */
 .ask {
-  top: max(220px, 33vh);
+  flex: none;
+  margin-block: auto; /* centred in the space between the clock and the plant panel */
   padding: 18px 18px 16px;
   transition:
     opacity 0.35s ease,
@@ -364,8 +377,16 @@ button {
 }
 
 /* --- Needs ----------------------------------------------------------------------------- */
+.needs-slot {
+  position: relative;
+  flex: none;
+  min-height: 46px;
+}
+
 .needs {
-  bottom: 28px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
   padding: 14px 14px 10px;
   transition:
     width 0.35s ease,
@@ -806,13 +827,13 @@ select option {
   cursor: pointer;
 }
 
-@media (max-width: 760px) {
-  .ask {
-    top: auto;
-    bottom: 200px;
+@media (max-width: 760px), (max-height: 560px) {
+  .left {
+    padding: 16px;
+    gap: 10px;
   }
-  .needs {
-    bottom: 16px;
+  .clock time {
+    font-size: 40px;
   }
   .mock-controls {
     display: none;

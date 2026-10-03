@@ -175,3 +175,49 @@ test('cold open: report time to first 3D frame', async ({ context }) => {
   }
   console.log(`first 3D frame (ms, software GL): ${times.join(', ')}`);
 });
+
+// On an update/reload Chrome swaps every open Marumado tab for its default new tab, so an
+// "extension context invalidated" page can't exist. (Data survival across updates is Chrome's
+// storage guarantee; the reloaded extension doesn't re-register under Playwright, so that half is manual.)
+test('extension update: open Marumado tabs are replaced, never left with a dead context', async ({ context }) => {
+  const a = await newTab(context);
+  await seed(a);
+  const b = await newTab(context);
+  await a.evaluate(() => chrome.runtime.reload()).catch(() => {});
+  await expect.poll(() => context.pages().some((p) => p.url().includes('/newtab.html')), { timeout: 10_000 }).toBe(false);
+  expect(b.url()).not.toContain('chrome-extension://');
+});
+
+test('diagnostics: uncaught errors are logged locally, shown in Settings and included in backups', async ({ context }, info) => {
+  const page = await newTab(context);
+  await seed(page);
+  page.errors.length = 0;
+  await page.evaluate(() => setTimeout(() => { throw new Error('boom from test'); }));
+  await expect.poll(() => page.evaluate(() => chrome.storage.local.get('diagnostics:errors').then((r) => ((r['diagnostics:errors'] as unknown[] | undefined) ?? []).length))).toBe(1);
+  await page.click('#openSettings');
+  await expect(page.locator('#diagnostics')).toContainText('1 problem recorded');
+  const download = page.waitForEvent('download');
+  await page.click("button:has-text('Export backup')");
+  const file = info.outputPath('backup.json');
+  await (await download).saveAs(file);
+  const backup = JSON.parse(await readFile(file, 'utf8'));
+  expect(backup.diagnostics[0].message).toContain('boom from test');
+  await page.click("#diagnostics button:has-text('Clear')");
+  await expect(page.locator('#diagnostics')).toContainText('No problems recorded');
+});
+
+test('200 % zoom / short window: question and plant panel never overlap', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page);
+  for (const size of [{ width: 720, height: 450 }, { width: 480, height: 820 }]) {
+    await page.setViewportSize(size);
+    await page.reload();
+    await expect(page.locator('#ask h3')).toBeVisible();
+    const ask = (await page.locator('#ask').boundingBox())!;
+    const slot = (await page.locator('.needs-slot').boundingBox())!;
+    const clock = (await page.locator('.clock').boundingBox())!;
+    expect(ask.y).toBeGreaterThanOrEqual(clock.y + clock.height);
+    expect(ask.y + ask.height).toBeLessThanOrEqual(slot.y);
+    await page.locator('#ask .btn.primary').click({ trial: true }); // actionable, nothing on top of it
+  }
+});

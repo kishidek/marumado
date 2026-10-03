@@ -15,6 +15,8 @@
     </div>
 
     <main class="ui">
+      <!-- Left column: stacks clock, question and plant panel so they never overlap. -->
+      <div class="left">
       <header class="clock">
         <time id="time"></time>
         <p id="date"></p>
@@ -24,10 +26,14 @@
       <!-- Both start hidden: they appear only once stored data has loaded (no empty flash). -->
       <section class="ask gone" id="ask" aria-live="polite"></section>
 
+      <!-- The slot holds the collapsed pill's height; the panel expands upward over the column. -->
+      <div class="needs-slot">
       <section class="needs" id="needs" aria-labelledby="needsTitle" tabindex="0" hidden>
         <h2 id="needsTitle"><span id="plantName"></span> <small id="plantMeta"></small><span class="minis" id="needsMini" aria-hidden="true"></span></h2>
         <ul id="needsList"></ul>
       </section>
+      </div>
+      </div>
 
       <button type="button" class="icon-btn help-btn" id="openHelp" aria-label="How Marumado works" hidden></button>
       <button type="button" class="icon-btn settings-btn" id="openSettings" aria-label="Settings" hidden></button>

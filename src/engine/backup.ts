@@ -9,10 +9,12 @@ export interface Backup {
   exportedAt: number;
   settings: Settings;
   events: AnswerEvent[];
+  /** Optional local error log (see storage/error-log.ts); ignored on restore. */
+  diagnostics?: { ts: number; message: string; version: string }[];
 }
 
-export function makeBackup(settings: Settings, events: AnswerEvent[], now: number): Backup {
-  return { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: now, settings, events };
+export function makeBackup(settings: Settings, events: AnswerEvent[], now: number, diagnostics: Backup['diagnostics'] = []): Backup {
+  return { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: now, settings, events, diagnostics };
 }
 
 export type ParseResult = { ok: true; backup: Backup } | { ok: false; error: string };
