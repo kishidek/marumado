@@ -1,10 +1,17 @@
-# Ajisai new tab — plant prototype
+# Ajisai new tab
 
-Standalone three.js prototype of the ajisai (紫陽花) plant, used to validate the growth × health concept before building the extension engines.
+A Chrome new-tab extension (in progress): a 3D ajisai (紫陽花) on a Kyoto windowsill that grows with your desk-work habits.
+
+Two pages for now:
+
+- `newtab.html`: **UI mockup** of what the user sees. Window scene with a continuous local-time sky, the question card, the plant's needs, settings and onboarding. All data is static (`src/newtab/mock.ts`); no engine is wired yet. A "Mockup controls" panel (review-only) changes time of day, plant age and health. URL params: `?hour=22&day=180&health=0.4&onboarding=1&settings=1`.
+- `index.html`: **plant lab**, described below.
+
+## Plant lab
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
+npm run dev      # lab at /, mockup at /newtab.html
 npm run build    # type-check + production build
 ```
 
