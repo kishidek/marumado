@@ -15,7 +15,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | 4 | Wire UI to engine | ✅ | Onboarding, questions, plant, settings, rename, growth-based camera |
 | 5 | Resilience | 🟡 | GL host (release when hidden, recover on return, no steal loop), CSS fallback window, early boot background, canvas fade-in. Open: >16-tabs E2E fails in headless (marked fixme) |
 | 6 | Backup | ✅ | Export, validated restore, pre-restore snapshot, backup reminder; E2E round-trip + corrupt file |
-| 7 | QA matrix | 🟡 | Playwright suite in repo (`npm run test:e2e`): 8/9 pass, 1 fixme |
+| 7 | QA matrix | 🟡 | Playwright suite in repo (`npm run test:e2e`): 9/10 pass, 1 fixme |
 | 8 | Store | ⏸️ | Postponed (private use, unpacked) |
 | 9 | Deck videos | ⬜ | Simulator ready |
 
@@ -52,6 +52,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Settings edge input | ✅ | Start = end, no workdays, min 1 habit validated |
 
 ## Log
+
+- 2026-10-03: "How Marumado works" modal (help button next to Settings) with a looping explainer video rendered from the lab (`npm run render:explainer`); fixed `npm run lab` dev server (script path outside Vite root); lab compare view keeps fixed slots while wilting. E2E: 9/10 pass, 1 fixme.
 
 - 2026-10-03: phase 5 mostly done; simulator; backup reminder; E2E suite in repo (8/9). E2E caught 2 real bugs: stale settings in export, page left inert when another tab plants/restores.
 

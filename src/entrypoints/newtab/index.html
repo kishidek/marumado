@@ -29,6 +29,7 @@
         <ul id="needsList"></ul>
       </section>
 
+      <button type="button" class="icon-btn help-btn" id="openHelp" aria-label="How Marumado works" hidden></button>
       <button type="button" class="icon-btn settings-btn" id="openSettings" aria-label="Settings" hidden></button>
     </main>
 
@@ -43,6 +44,18 @@
       </header>
       <div class="drawer-body" id="settingsBody"></div>
     </aside>
+
+    <!-- How it works -->
+    <div class="modal-wrap" id="help" hidden>
+      <div class="modal help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <header class="help-head">
+          <h2 id="helpTitle">How Marumado works</h2>
+          <button type="button" class="icon-btn" id="closeHelp" aria-label="Close"></button>
+        </header>
+        <video id="helpVideo" src="media/explainer.webm" muted loop playsinline preload="none" aria-label="The ajisai at five ages, wilting when neglected and recovering with care"></video>
+        <ul class="help-points" id="helpPoints"></ul>
+      </div>
+    </div>
 
     <!-- First-run onboarding -->
     <div class="modal-wrap" id="onboarding" hidden>

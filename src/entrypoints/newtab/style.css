@@ -303,6 +303,41 @@ button {
   right: 24px;
 }
 
+.help-btn {
+  position: absolute;
+  top: 24px;
+  right: 72px;
+}
+
+.modal.help {
+  width: min(760px, 100%);
+}
+
+.help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.help video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1280 / 560;
+  border-radius: 12px;
+  background: #c9b79c;
+}
+
+.help-points {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.help-points li {
+  margin: 6px 0;
+}
+
 /* --- Needs ----------------------------------------------------------------------------- */
 .needs {
   bottom: 28px;

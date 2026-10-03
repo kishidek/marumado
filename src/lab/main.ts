@@ -19,6 +19,9 @@ const HEALTH_PRESETS = [
 
 // URL params make any state linkable/screenshot-able: ?days=90&health=0.5&grid=1
 const params = new URLSearchParams(location.search);
+/** ?clean=1 hides the panel and centres the scene (used to render the explainer video). */
+const CLEAN = params.get('clean') === '1';
+if (CLEAN) document.documentElement.classList.add('clean');
 const state = {
   days: Number(params.get('days') ?? 90),
   health: Number(params.get('health') ?? 1),
@@ -62,6 +65,16 @@ type Placed = { build: AjisaiBuild; label?: string };
 let placed: Placed[] = [];
 let lastBuildMs = 0;
 
+const slotWidths = new Map<number, number>();
+function slotWidth(days: number) {
+  if (!slotWidths.has(days)) {
+    const ref = buildAjisai({ days, health: 1 });
+    slotWidths.set(days, Math.max(ref.potRadius * 2.2, ref.spread * 1.7) + 0.05);
+    ref.dispose();
+  }
+  return slotWidths.get(days)!;
+}
+
 function rebuild() {
   const t0 = performance.now();
   for (const { build } of placed) {
@@ -72,7 +85,8 @@ function rebuild() {
 
   if (state.grid) {
     const builds = STAGES.map((s) => ({ build: buildAjisai({ days: s.days, health: state.health }), label: s.label }));
-    const widths = builds.map(({ build }) => Math.max(build.potRadius * 2.2, build.spread * 1.7) + 0.05);
+    // Slot widths come from the healthy plant so positions don't shift as plants wilt.
+    const widths = STAGES.map((st) => slotWidth(st.days));
     let x = -widths.reduce((a, b) => a + b, 0) / 2;
     builds.forEach((p, i) => {
       p.build.group.position.x = x + widths[i] / 2;
@@ -105,7 +119,7 @@ function fitToPlants(resetDir = false) {
     box.expandByPoint(new THREE.Vector3(x + build.spread, build.height, build.spread));
   }
   const sphere = box.getBoundingSphere(new THREE.Sphere());
-  fit(sphere.center, sphere.radius * (state.grid ? 0.8 : 0.9), resetDir);
+  fit(sphere.center, sphere.radius * (state.grid ? (CLEAN ? 0.62 : 0.8) : 0.9), resetDir);
 }
 
 /** Fit to how big the plant will be at `days`, so a playback doesn't need re-framing. */
@@ -346,7 +360,7 @@ function loop(now: number) {
 /** Shift the projection so the scene is centred in the area not covered by the side panel. */
 function applyViewOffset() {
   camera.aspect = innerWidth / innerHeight;
-  const panelShift = innerWidth > 640 ? 156 : 0;
+  const panelShift = innerWidth > 640 && !CLEAN ? 156 : 0;
   camera.setViewOffset(innerWidth, innerHeight, -panelShift, 0, innerWidth, innerHeight);
   camera.updateProjectionMatrix();
 }

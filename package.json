@@ -14,7 +14,8 @@
     "postinstall": "wxt prepare",
     "test": "vitest run",
     "test:tz": "TZ=Europe/Madrid vitest run && TZ=America/Santiago vitest run && TZ=Asia/Tokyo vitest run",
-    "test:e2e": "wxt build && playwright test"
+    "test:e2e": "wxt build && playwright test",
+    "render:explainer": "node scripts/render-explainer.mjs"
   },
   "dependencies": {
     "@fontsource/shippori-mincho": "^5.3.0",

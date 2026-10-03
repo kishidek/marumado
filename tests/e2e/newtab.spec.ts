@@ -134,3 +134,20 @@ test('touch: tapping the collapsed plant pill opens it', async () => {
   await expect(page.locator('#needsList')).toBeVisible();
   await context.close();
 });
+
+test('help modal explains the app and plays the looping explainer video', async ({ context }, info) => {
+  const page = await newTab(context);
+  await seed(page, { plantName: 'Kiko' });
+  await page.click('#openHelp');
+  await expect(page.locator('#help')).toBeVisible();
+  await expect(page.locator('#helpPoints')).toContainText('Kiko grows');
+  const video = page.locator('#helpVideo');
+  await expect(video).toHaveJSProperty('loop', true);
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 10_000 }).toBeGreaterThan(0.5);
+  await page.waitForTimeout(3500); // land on the wilted part for the screenshot
+  await page.screenshot({ path: info.outputPath('help.png') });
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#help')).toBeHidden();
+  await page.click('#ask .btn.primary'); // background is interactive again
+  await expect.poll(() => storedEvents(page)).toBe(1);
+});

@@ -38,6 +38,7 @@ Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpack
 | `npm test` | Engine tests (`npm run test:tz` runs them in 3 time zones) |
 | `npm run test:e2e` | Builds, then runs Playwright against the real unpacked extension |
 | `npm run lab` | Plant lab (plain Vite page, not shipped): tune the ajisai's growth × health |
+| `npm run render:explainer` | Re-renders `public/media/explainer.webm` (help modal video) from the lab; needs `ffmpeg` |
 
 In dev mode (`npm run dev`) the new tab shows **Dev controls** (sky hour, plant age/health preview, erase data) and accepts `?hour=22&day=180&health=0.4`. Production builds strip them.
 

@@ -10,6 +10,7 @@ import { createWindowScene } from '../../scene/window-scene';
 import { shiftBack, simulateDays, type Pattern } from '../../engine/simulate';
 import { appendEvent, backupReminderItem, clearAll, eventsItem, plant, replaceAll, settingsItem, watchAll } from '../../storage/items';
 import { $, el, icon, ordinal, setBackgroundInert, toast } from '../../ui/dom';
+import { initHelp } from '../../ui/help';
 import { habitIcon } from '../../ui/icons';
 import { openOnboarding } from '../../ui/onboarding';
 import { initSettings, openSettings, settingsOpen } from '../../ui/settings';
@@ -270,6 +271,7 @@ function render() {
     hideCard();
     $('needs').hidden = true;
     $('openSettings').hidden = true;
+    $('openHelp').hidden = true;
     updatePlant();
     tick();
     if ($('onboarding').hidden) {
@@ -288,6 +290,7 @@ function render() {
   }
   $('needs').hidden = false;
   $('openSettings').hidden = false;
+  $('openHelp').hidden = false;
   state = computeState(settings, events, now);
   updatePlant();
   renderNeeds(now);
@@ -376,6 +379,7 @@ function mountDevControls() {
 $('openSettings').append(icon(SettingsIcon, 20));
 $('openSettings').addEventListener('click', () => openSettings(true));
 initSettings({ getSettings: () => settings, getEvents: () => events });
+initHelp({ plantName: () => settings?.plantName ?? 'your ajisai', reduceMotion: () => !!settings?.reduceMotion, settingsOpen });
 mountDevControls();
 
 resize();
