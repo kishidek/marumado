@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ajisai prototype</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="labels"></div>
+
+    <aside class="panel">
+      <h1>Ajisai <span lang="ja">紫陽花</span></h1>
+      <p class="sub">Plant prototype · growth × health</p>
+
+      <section>
+        <div class="row"><span>Growth</span><output id="daysOut"></output></div>
+        <div class="chips" id="stageChips"></div>
+        <input type="range" id="days" min="0" max="365" step="1" />
+        <button type="button" id="playGrowth">▶ Play 0 → 365 days</button>
+      </section>
+
+      <section>
+        <div class="row"><span>Health</span><output id="healthOut"></output></div>
+        <div class="chips" id="healthChips"></div>
+        <input type="range" id="health" min="0" max="100" step="1" />
+        <button type="button" id="playNeglect">▶ Neglect → recovery</button>
+      </section>
+
+      <section class="toggles">
+        <label><input type="checkbox" id="grid" /> Compare all stages</label>
+        <label><input type="checkbox" id="rotate" /> Auto-rotate</label>
+      </section>
+
+      <section class="stats" id="stats"></section>
+    </aside>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

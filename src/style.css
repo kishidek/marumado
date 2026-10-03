@@ -1,0 +1,165 @@
+:root {
+  --bg: #efe9df;
+  --panel: rgba(255, 252, 246, 0.86);
+  --ink: #2b2620;
+  --muted: #7a7064;
+  --line: #e2d9cb;
+  --accent: #2d4a78;
+  --accent-ink: #fff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+#app canvas {
+  display: block;
+}
+
+.panel {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 280px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+h1 span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.sub {
+  margin: 2px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+section {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+output {
+  color: var(--muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.chips button,
+section > button {
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chips button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+section > button {
+  width: 100%;
+  margin-top: 6px;
+  border-radius: 8px;
+}
+
+section > button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.toggles label {
+  display: block;
+  margin: 2px 0;
+  cursor: pointer;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats b {
+  color: var(--ink);
+  font-weight: 500;
+  text-align: right;
+}
+
+#labels {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+#labels div {
+  position: absolute;
+  transform: translate(-50%, 0);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 252, 246, 0.9);
+  color: var(--ink);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .panel {
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+    max-height: 45vh;
+  }
+}
