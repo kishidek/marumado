@@ -30,13 +30,13 @@ await server.listen();
 const browser = await chromium.launch({ channel: 'chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const frames = await mkdtemp(path.join(tmpdir(), 'marumado-frames-'));
 try {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 560 } });
+  const page = await browser.newPage({ viewport: { width: 1600, height: 760 } });
   await page.goto('http://localhost:5199/lab/index.html?grid=1&clean=1&capture=1&health=1');
   await page.waitForTimeout(1500);
   await page.evaluate(() => {
     const cap = Object.assign(document.createElement('div'), { id: 'cap' });
     cap.style.cssText =
-      'position:fixed;top:26px;left:50%;transform:translateX(-50%);padding:6px 16px;border-radius:999px;background:rgba(255,252,246,.92);font:600 20px Georgia,serif;color:#2b2620';
+      'position:fixed;top:28px;left:50%;transform:translateX(-50%);padding:8px 22px;border-radius:999px;background:rgba(255,252,246,.92);font:600 30px Georgia,serif;color:#2b2620';
     document.body.append(cap);
   });
   const total = FPS * SECONDS;
@@ -56,7 +56,7 @@ try {
     await page.screenshot({ path: path.join(frames, `f${String(i).padStart(4, '0')}.png`) });
     if (i % 24 === 0) process.stdout.write(`frame ${i}/${total}\n`);
   }
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', path.join(frames, 'f%04d.png'), '-c:v', 'libvpx-vp9', '-crf', '36', '-b:v', '0', '-pix_fmt', 'yuv420p', '-row-mt', '1', '-an', OUT]);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', path.join(frames, 'f%04d.png'), '-c:v', 'libvpx-vp9', '-crf', '34', '-b:v', '0', '-pix_fmt', 'yuv420p', '-row-mt', '1', '-an', OUT]);
   console.log(`wrote ${OUT}`);
 } finally {
   await browser.close();

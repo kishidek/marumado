@@ -119,7 +119,7 @@ function fitToPlants(resetDir = false) {
     box.expandByPoint(new THREE.Vector3(x + build.spread, build.height, build.spread));
   }
   const sphere = box.getBoundingSphere(new THREE.Sphere());
-  fit(sphere.center, sphere.radius * (state.grid ? (CLEAN ? 0.62 : 0.8) : 0.9), resetDir);
+  fit(sphere.center, sphere.radius * (state.grid ? (CLEAN ? 0.5 : 0.8) : 0.9), resetDir);
 }
 
 /** Fit to how big the plant will be at `days`, so a playback doesn't need re-framing. */

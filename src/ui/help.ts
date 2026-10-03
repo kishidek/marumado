@@ -11,13 +11,14 @@ export function initHelp(opts: { plantName: () => string; reduceMotion: () => bo
 
   const open = () => {
     const name = opts.plantName();
+    const tile = (key: string, detail: string) => el('li', {}, el('strong', {}, key), el('span', {}, detail));
     $('helpPoints').replaceChildren(
-      ...[
-        'Each new tab may ask one quick question about a healthy desk habit.',
-        `Say “Yes” and ${name} grows: new leaves, bigger pots, blooms. Skip too often and it droops, but it never dies.`,
-        'Questions only appear during your work hours. Outside them, and on vacation, nothing is lost.',
-        'Everything stays in this browser. Back it up now and then from Settings.',
-      ].map((t) => el('li', {}, t)),
+      tile('One quick question', 'on each new tab'),
+      tile('Say Yes', `and ${name} grows`),
+      tile('Skip it', 'and it droops'),
+      tile('It never dies', 'care brings it back'),
+      tile('Only at work', 'no questions after hours'),
+      tile('Stays in this browser', 'back it up in Settings'),
     );
     wrap.hidden = false;
     setBackgroundInert(true);

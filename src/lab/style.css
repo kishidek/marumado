@@ -167,3 +167,9 @@ input[type='range'] {
 .clean .panel {
   display: none;
 }
+
+.clean #labels div {
+  padding: 4px 14px;
+  font-size: 20px;
+  font-weight: 500;
+}

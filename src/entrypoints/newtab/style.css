@@ -310,32 +310,57 @@ button {
 }
 
 .modal.help {
-  width: min(760px, 100%);
+  width: min(1180px, 94vw);
+  max-height: calc(100vh - 24px);
+  padding: 28px 32px 30px;
 }
 
 .help-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.modal.help h2 {
+  font-size: 30px;
 }
 
 .help video {
   display: block;
-  width: 100%;
-  aspect-ratio: 1280 / 560;
-  border-radius: 12px;
-  background: #c9b79c;
+  /* Width follows the available height, so the video is never letterboxed. */
+  width: min(100%, calc((100vh - 300px) * 1600 / 760));
+  margin: 0 auto;
+  aspect-ratio: 1600 / 760;
+  border-radius: 16px;
+  background: #cdbb9e;
 }
 
 .help-points {
-  margin: 16px 0 0;
-  padding-left: 20px;
-  color: var(--muted);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px 20px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .help-points li {
-  margin: 6px 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+.help-points strong {
+  display: block;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.help-points span {
+  color: var(--muted);
+  font-size: 15px;
 }
 
 /* --- Needs ----------------------------------------------------------------------------- */

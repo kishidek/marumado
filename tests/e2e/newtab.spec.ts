@@ -140,7 +140,7 @@ test('help modal explains the app and plays the looping explainer video', async 
   await seed(page, { plantName: 'Kiko' });
   await page.click('#openHelp');
   await expect(page.locator('#help')).toBeVisible();
-  await expect(page.locator('#helpPoints')).toContainText('Kiko grows');
+  await expect(page.locator('#helpPoints')).toContainText('and Kiko grows');
   const video = page.locator('#helpVideo');
   await expect(video).toHaveJSProperty('loop', true);
   await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 10_000 }).toBeGreaterThan(0.5);
