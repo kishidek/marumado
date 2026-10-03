@@ -211,7 +211,7 @@ export function createWindowScene(): WindowScene {
     const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const plantTop = plant ? plant.height : 0.2;
     // Half the visible height at the wall plane: hug the plant, never tighter than the sill.
-    let halfH = Math.max(0.34, plantTop * 0.62 + 0.1);
+    let halfH = Math.max(0.36, plantTop * 0.72 + 0.12); // leave sky above the plant
     // Narrow (portrait) screens: keep at least the plant and a bit of window in view.
     halfH = Math.max(halfH, 0.42 / camera.aspect);
     const dist = halfH / tan;

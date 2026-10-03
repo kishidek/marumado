@@ -19,6 +19,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, props: Record<string,
 
 const params = new URLSearchParams(location.search);
 const mock = {
+  name: params.get('name') ?? MOCK.plantName,
   day: Number(params.get('day') ?? MOCK.day),
   health: Number(params.get('health') ?? MOCK.health),
   hourOverride: params.has('hour') ? Number(params.get('hour')) : null as number | null,
@@ -63,7 +64,7 @@ const currentHour = () => {
 };
 
 function greetingFor(h: number) {
-  if (h < 5) return 'Still up? Your ajisai is resting.';
+  if (h < 5) return `Still up? ${mock.name} is resting.`;
   if (h < 12) return 'Good morning';
   if (h < 18) return 'Good afternoon';
   if (h < 22) return 'Good evening';
@@ -88,8 +89,15 @@ function tick() {
 function renderNeeds() {
   const pot = [40, 150, 290].filter((d) => mock.day >= d).length + 1; // matches the lab's repotting days
   const ordinal = ['1st', '2nd', '3rd', '4th'][pot - 1];
-  $('plantName').textContent = MOCK.plantName;
+  $('plantName').textContent = mock.name;
   $('plantMeta').textContent = `Day ${mock.day} · ${ordinal} pot`;
+  // Collapsed view: one tinted icon per habit, so the state still reads at a glance.
+  $('needsMini').replaceChildren(
+    ...mock.needs.map((n) => {
+      const dot = el('span', { className: `mini${n.level < 0.45 ? ' low' : ''}`, title: habitById(n.habitId).name }, icon(habitById(n.habitId).icon, 14));
+      return dot;
+    }),
+  );
   $('needsList').replaceChildren(
     ...mock.needs.map((n) => {
       const habit = habitById(n.habitId);
@@ -128,10 +136,13 @@ function swapCard(render: () => void) {
   }, 220);
 }
 
+let dismissTimer = 0;
+
 function showQuestion(habitId: string) {
   const habit = habitById(habitId);
   const card = $('ask');
-  card.classList.remove('done');
+  clearTimeout(dismissTimer);
+  card.classList.remove('done', 'gone');
   const answer = (kind: 'yes' | 'no' | 'later') => onAnswer(habitId, kind);
   const yes = el('button', { type: 'button', className: 'btn primary' }, 'Yes');
   const no = el('button', { type: 'button', className: 'btn' }, 'Not yet');
@@ -157,13 +168,14 @@ function showDone() {
   card.classList.add('done');
   card.replaceChildren(
     el('div', { className: 'ask-head' }, el('span', { className: 'ask-icon' }, icon(Sprout, 18)), el('p', { className: 'ask-eyebrow' }, 'All caught up')),
-    el('h3', {}, 'Your ajisai is happy for now.'),
+    el('h3', {}, `${mock.name} is happy for now.`),
     el('p', { className: 'hint' }, 'Next check-in in about 40 minutes.'),
   );
+  dismissTimer = window.setTimeout(() => card.classList.add('gone'), 3000);
 }
 
 const responses = {
-  yes: (name: string) => `Nice. Your ajisai felt that ${name.toLowerCase()}.`,
+  yes: (habit: string) => `Nice. ${mock.name} felt that ${habit.toLowerCase()}.`,
   no: () => 'No worries. Try to fit it in soon.',
   later: () => 'Okay, I’ll ask again in 30 minutes.',
 };
@@ -257,7 +269,7 @@ function renderSettings() {
     el('h3', {}, 'Work hours'),
     hoursRow(),
     dayToggles(MOCK.workHours.days),
-    el('p', { className: 'note' }, 'Questions only appear during these hours. Your ajisai never loses health outside them.'),
+    el('p', { className: 'note' }, `Questions only appear during these hours. ${mock.name} never loses health outside them.`),
 
     el('h3', {}, 'Away'),
     toggle('Vacation mode', 'Pause your plant while you’re away.'),
@@ -276,7 +288,7 @@ function renderSettings() {
     el(
       'p',
       { className: 'note' },
-      `Last backup: ${MOCK.lastExport}. If you uninstall the extension or clear browser data, your ajisai is gone unless you have a backup.`,
+      `Last backup: ${MOCK.lastExport}. If you uninstall the extension or clear browser data, ${mock.name} is gone unless you have a backup.`,
     ),
   );
 }
@@ -291,13 +303,16 @@ function openSettings(open: boolean) {
 // --- Onboarding --------------------------------------------------------------------------
 let obStep = 0;
 const obSelected = new Set(DEFAULT_HABITS);
-const OB_STEPS = 4;
+const OB_STEPS = 5;
+const NAME_IDEAS = ['Aoi', 'Hana', 'Mizu', 'Sora', 'Kiko'];
+let obName = '';
 
 function renderOnboarding() {
   $('obSteps').replaceChildren(...Array.from({ length: OB_STEPS }, (_, i) => el('li', { className: i <= obStep ? 'on' : '' })));
   ($('obBack') as HTMLButtonElement).style.visibility = obStep === 0 ? 'hidden' : 'visible';
   $('obNext').textContent = obStep === OB_STEPS - 1 ? 'Plant the seed' : 'Continue';
   const body = $('obBody');
+  $<HTMLButtonElement>('obNext').disabled = false;
 
   if (obStep === 0) {
     body.replaceChildren(
@@ -310,6 +325,47 @@ function renderOnboarding() {
       ),
     );
   } else if (obStep === 1) {
+    const input = el('input', {
+      type: 'text',
+      className: 'name-input',
+      value: obName,
+      maxLength: 24,
+      placeholder: 'e.g. Aoi',
+      ariaLabel: 'Plant name',
+      autocomplete: 'off',
+    });
+    const next = $<HTMLButtonElement>('obNext');
+    const sync = () => {
+      obName = input.value.trim();
+      next.disabled = !obName;
+    };
+    input.addEventListener('input', sync);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && obName) next.click();
+    });
+    const ideas = el(
+      'div',
+      { className: 'days' },
+      ...NAME_IDEAS.map((n) => {
+        const b = el('button', { type: 'button', className: 'chip' }, n);
+        b.addEventListener('click', () => {
+          input.value = n;
+          sync();
+          input.focus();
+        });
+        return b;
+      }),
+    );
+    body.replaceChildren(
+      el('h2', { id: 'obTitle' }, 'What will you call it?'),
+      el('p', {}, 'Give your ajisai a name. It will greet you by it on every new tab.'),
+      input,
+      el('p', { className: 'note' }, 'Need an idea?'),
+      ideas,
+    );
+    sync();
+    requestAnimationFrame(() => input.focus());
+  } else if (obStep === 2) {
     const counter = el('p', { className: 'counter' });
     const grid = el('div', { className: 'catalog' });
     const paint = () => {
@@ -331,10 +387,10 @@ function renderOnboarding() {
     };
     paint();
     body.replaceChildren(el('h2', { id: 'obTitle' }, 'Pick your habits'), counter, grid);
-  } else if (obStep === 2) {
+  } else if (obStep === 3) {
     body.replaceChildren(
       el('h2', { id: 'obTitle' }, 'When do you work?'),
-      el('p', {}, 'Questions only show up during these hours. Outside them, your ajisai rests and loses nothing.'),
+      el('p', {}, `Questions only show up during these hours. Outside them, ${obName || 'your ajisai'} rests and loses nothing.`),
       hoursRow(),
       dayToggles(MOCK.workHours.days),
     );
@@ -353,6 +409,7 @@ function renderOnboarding() {
 
 function openOnboarding(open: boolean) {
   obStep = 0;
+  obName = '';
   $('onboarding').hidden = !open;
   if (open) renderOnboarding();
 }
@@ -362,8 +419,11 @@ $('obNext').addEventListener('click', () => {
     obStep++;
     renderOnboarding();
   } else {
+    mock.name = obName;
     openOnboarding(false);
-    toast('Your ajisai is planted. See you on your next tab.');
+    renderNeeds();
+    tick();
+    toast(`${mock.name} is planted. See you on your next tab.`);
   }
 });
 $('obBack').addEventListener('click', () => {
@@ -438,6 +498,8 @@ setInterval(tick, 30_000);
 renderNeeds();
 showQuestion(mock.queue[0]);
 renderMockControls();
+const NEEDS_COLLAPSE_AFTER_MS = 6000;
+setTimeout(() => $('needs').classList.add('collapsed'), NEEDS_COLLAPSE_AFTER_MS);
 if (params.get('onboarding') === '1') openOnboarding(true);
 if (params.get('settings') === '1') openSettings(true);
 requestAnimationFrame(loop);

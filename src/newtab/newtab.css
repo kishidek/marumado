@@ -87,7 +87,7 @@ button {
 
 .clock time {
   display: block;
-  font: 500 clamp(52px, 6.2vw, 88px) / 1 var(--serif);
+  font: 500 clamp(40px, 4.4vw, 64px) / 1 var(--serif);
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
@@ -102,7 +102,7 @@ button {
 .clock #greeting {
   color: var(--ink);
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: 16px;
 }
 
 /* --- Glass cards ----------------------------------------------------------------------- */
@@ -130,6 +130,17 @@ button {
 .ask.leaving {
   opacity: 0;
   transform: translateY(8px);
+}
+
+/* After "All caught up" the card fades out completely, leaving the view clear. */
+.ask.gone {
+  opacity: 0;
+  transform: translateY(8px);
+  visibility: hidden;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease,
+    visibility 0s linear 0.6s;
 }
 
 .ask-head {
@@ -231,6 +242,65 @@ button {
 .needs {
   bottom: 28px;
   padding: 14px 14px 10px;
+  transition:
+    width 0.35s ease,
+    padding 0.35s ease;
+}
+
+.needs ul {
+  max-height: 260px;
+  overflow: hidden;
+  transition:
+    max-height 0.35s ease,
+    opacity 0.25s ease;
+}
+
+.minis {
+  display: none;
+  gap: 6px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.mini {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--meter-ok) 22%, transparent);
+  color: var(--meter-ok);
+}
+
+.mini.low {
+  background: color-mix(in srgb, var(--meter-low) 26%, transparent);
+  color: var(--meter-low);
+}
+
+/* Collapsed: a small pill with name + habit dots; hover or keyboard focus opens it. */
+.needs.collapsed:not(:hover):not(:focus-within) {
+  width: auto;
+  padding: 10px 14px;
+}
+
+.needs.collapsed:not(:hover):not(:focus-within) h2 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.needs.collapsed:not(:hover):not(:focus-within) h2 small {
+  display: none;
+}
+
+.needs.collapsed:not(:hover):not(:focus-within) .minis {
+  display: inline-flex;
+}
+
+.needs.collapsed:not(:hover):not(:focus-within) ul {
+  position: absolute; /* out of the flow so the pill hugs its content */
+  max-height: 0;
+  opacity: 0;
 }
 
 .needs h2 {
@@ -549,6 +619,16 @@ select option {
   border-radius: 20px;
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+.name-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: 500 22px var(--serif);
 }
 
 .hours {
