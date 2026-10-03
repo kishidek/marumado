@@ -4,7 +4,7 @@ A Chrome new-tab extension: an ajisai (紫陽花, hydrangea) on a Kyoto windowsi
 
 Each new tab may ask one quick question ("Did you drink water in the last 2 hours?"). Keep your habits and the plant grows, gets repotted and blooms; skip them and it droops, but it never dies. The sky outside the round window follows your local time.
 
-> **Status:** early. The new tab is a UI mockup with static data; the habit engine is not wired yet. See [docs/plan-wxt.md](docs/plan-wxt.md).
+> **Status:** early but working: onboarding, questions, growth/health engine, settings, backup/restore. Not yet: WebGL resilience for many open tabs, store packaging. See [docs/plan-wxt.md](docs/plan-wxt.md).
 
 ## Privacy
 
@@ -27,15 +27,19 @@ Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpack
 | `npm run build` | Production build in `.output/chrome-mv3` |
 | `npm run zip` | Zip for distribution |
 | `npm run compile` | Type-check |
+| `npm test` | Engine tests (`npm run test:tz` runs them in 3 time zones) |
 | `npm run lab` | Plant lab (plain Vite page, not shipped): tune the ajisai's growth × health |
 
-The new tab accepts review params: `?hour=22&day=180&health=0.4&onboarding=1&settings=1`.
+In dev mode (`npm run dev`) the new tab shows **Dev controls** (sky hour, plant age/health preview, erase data) and accepts `?hour=22&day=180&health=0.4`. Production builds strip them.
 
 ## Structure
 
 ```
 src/
   entrypoints/newtab/   the new-tab page (WXT wires the manifest override)
+  engine/               pure TS: event log → health & growth, question scheduler, backup validation
+  storage/              chrome.storage via WXT, Web Locks for multi-tab writes
+  ui/                   onboarding, settings, DOM helpers
   plant/                procedural ajisai: every visual is a function of days of care × health
   scene/                window scene: room, round window, sky by local time, textures
   lab/                  plant lab code

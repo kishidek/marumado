@@ -1,6 +1,6 @@
 # Plan: port to WXT and ship the MVP
 
-Status: draft · 2026-10-03 · stack: **WXT 0.21 + TypeScript (vanilla UI) + three.js**
+Status: phases 1–4 done, 6 partly (export/restore) · 2026-10-03 · stack: **WXT 0.21 + TypeScript (vanilla UI) + three.js**
 
 ## 1. Target
 
