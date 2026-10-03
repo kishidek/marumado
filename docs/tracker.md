@@ -1,6 +1,6 @@
 # Tracker
 
-Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk.
+Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk. Every bug found and fixed is in the [bug log](bugs.md) (13 so far).
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
@@ -64,6 +64,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
 ### Found while closing the tracker
 
+Full list with causes and guards: [bugs.md](bugs.md).
+
 | Bug | Status | Notes |
 |---|---|---|
 | A habit added weeks later started at 0 health (penalized for days before it existed) | ✅ | `addedAt` per habit; Vitest |
@@ -90,6 +92,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-04: bug log created (`docs/bugs.md`, 13 bugs with cause, fix, guard and commit).
 
 - 2026-10-04: tracker items closed (strict TS, light mode, log compaction); 4 bugs found and fixed (see above). Vitest 29 × 3 TZ, E2E 17/17.
 
