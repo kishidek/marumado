@@ -1,3 +1,34 @@
+# Dependencies
 node_modules
+
+# Build output (WXT)
+.output
+.wxt
+stats.html
+stats-*.json
+web-ext.config.ts
+
+# Other build / test artifacts
 dist
+coverage
+test-results
+playwright-report
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Env / secrets
+.env
+.env.*
+
+# Editor and OS
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
+*.sw?
+
+# The global "Icon" rule (macOS Icon\r files) also matches this folder on case-insensitive disks.
+!/public/icon/

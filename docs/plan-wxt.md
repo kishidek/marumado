@@ -45,7 +45,7 @@ Each phase ends with something that runs. The lab and mockup keep working throug
 |---|---|---|---|
 | 0 | **Decisions** | Answers to §5 | Nothing in §5 marked "blocking" is open |
 | 1 | **Scaffold WXT** | `npx wxt init`-style layout, mockup moved to `entrypoints/newtab`, lab moved to `lab/` | `wxt` opens Chrome with the extension; a new tab shows the mockup; `wxt zip` produces a store zip; production build has no CSP errors |
-| 2 | **Engine (pure TS)** | `engine/*` + Vitest suite + dev simulator ("advance N days") | Model and scheduler tests pass in 3 time zones incl. DST days; simulator reproduces 30 d healthy / neglect / recovery |
+| 2 | **Engine (pure TS)** | Re-enable `noUncheckedIndexedAccess` (off since phase 1); `engine/*` + Vitest suite + dev simulator ("advance N days") | Model and scheduler tests pass in 3 time zones incl. DST days; simulator reproduces 30 d healthy / neglect / recovery |
 | 3 | **Storage + multi-tab** | `storage/items.ts`, append-only event log, Web Locks, `storage.watch` | Two tabs answering at once lose nothing; a stale tab refreshes when focused |
 | 4 | **Wire UI to engine** | Mock removed; onboarding writes real settings; card/needs/plant read the model | Full first-run → answer → plant changes, with real persistence |
 | 5 | **Resilience** | WebGL lifecycle, fallback, context-invalidated banner, first-paint gradient | 20 open new tabs: every visible tab renders; WebGL disabled: static fallback shows |

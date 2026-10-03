@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Marumado: round window in a plaster wall, an ajisai bloom inside. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fbde6"/>
+      <stop offset="1" stop-color="#dcecf6"/>
+    </linearGradient>
+    <clipPath id="win"><circle cx="64" cy="64" r="44"/></clipPath>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="#e9dcc4"/>
+  <circle cx="64" cy="64" r="44" fill="url(#sky)"/>
+  <g clip-path="url(#win)">
+    <path d="M14 84 L40 66 L58 76 L78 58 L114 80 L114 120 L14 120 Z" fill="#7d93a6"/>
+    <ellipse cx="50" cy="96" rx="15" ry="8" fill="#3f7a4a" transform="rotate(-25 50 96)"/>
+    <ellipse cx="80" cy="96" rx="15" ry="8" fill="#4f8a55" transform="rotate(25 80 96)"/>
+    <circle cx="56" cy="72" r="13" fill="#5d63c4"/>
+    <circle cx="73" cy="70" r="13" fill="#7b5fc4"/>
+    <circle cx="64" cy="58" r="13" fill="#6f86d8"/>
+    <circle cx="61" cy="56" r="4" fill="#a9b8f0"/>
+    <circle cx="72" cy="66" r="3.5" fill="#b4a2ec"/>
+    <circle cx="53" cy="70" r="3.5" fill="#9aa6ea"/>
+  </g>
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#3a271b" stroke-width="7"/>
+</svg>

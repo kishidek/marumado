@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildAjisai, VISIBLE_LEAF_PAIRS, type AjisaiBuild } from './plant/ajisai';
-import { clamp01, lerp, smoothstep } from './plant/math';
+import { buildAjisai, VISIBLE_LEAF_PAIRS, type AjisaiBuild } from '../plant/ajisai';
+import { clamp01, lerp, smoothstep } from '../plant/math';
 import './style.css';
 
 const STAGES = [

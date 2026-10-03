@@ -1,12 +1,17 @@
 {
-  "name": "ajisai-new-tab",
+  "name": "marumado",
+  "description": "A desk plant for your new tab: an ajisai on a Kyoto windowsill that grows with your healthy work habits.",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
+  "license": "MIT",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "compile": "tsc --noEmit",
+    "lab": "vite --config lab/vite.config.ts",
+    "postinstall": "wxt prepare"
   },
   "dependencies": {
     "@fontsource/shippori-mincho": "^5.3.0",
@@ -16,7 +21,8 @@
   "devDependencies": {
     "@types/node": "^26.6.4",
     "@types/three": "^0.186.0",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.2"
+    "typescript": "^5.9.3",
+    "vite": "^8.3.2",
+    "wxt": "^0.21.4"
   }
 }

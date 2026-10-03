@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { createElement, Settings, ShieldCheck, Sprout, X, type IconNode } from 'lucide';
-import { buildAjisai } from '../plant/ajisai';
-import { skyAt } from '../scene/sky';
-import { createWindowScene } from '../scene/window-scene';
+import { buildAjisai } from '../../plant/ajisai';
+import { skyAt } from '../../scene/sky';
+import { createWindowScene } from '../../scene/window-scene';
 import { CATALOG, DEFAULT_HABITS, habitById, MAX_HABITS, MOCK } from './mock';
-import './newtab.css';
+import './style.css';
 
 // ⚠ Mockup: every value below is static or nudged by hand. No engine is wired.
 

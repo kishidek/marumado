@@ -1,16 +1,11 @@
 {
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
-    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "noEmit": true
+    // WXT enables this by default. The ported plant/scene code predates it;
+    // re-enable (and fix) before writing src/engine (plan, phase 2).
+    "noUncheckedIndexedAccess": false
   },
-  "include": ["src"]
+  "include": ["src", "lab", ".wxt/wxt.d.ts"]
 }

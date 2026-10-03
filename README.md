@@ -1,23 +1,49 @@
-# Ajisai new tab
+# Marumado 丸窓
 
-A Chrome new-tab extension (in progress): a 3D ajisai (紫陽花) on a Kyoto windowsill that grows with your desk-work habits.
+A Chrome new-tab extension: an ajisai (紫陽花, hydrangea) on a Kyoto windowsill that grows with your healthy desk-work habits.
 
-Two pages for now:
+Each new tab may ask one quick question ("Did you drink water in the last 2 hours?"). Keep your habits and the plant grows, gets repotted and blooms; skip them and it droops, but it never dies. The sky outside the round window follows your local time.
 
-- `newtab.html`: **UI mockup** of what the user sees. Window scene with a continuous local-time sky, the question card, the plant's needs, settings and onboarding. All data is static (`src/newtab/mock.ts`); no engine is wired yet. A "Mockup controls" panel (review-only) changes time of day, plant age and health. URL params: `?hour=22&day=180&health=0.4&onboarding=1&settings=1`.
-- `index.html`: **plant lab**, described below.
+> **Status:** early. The new tab is a UI mockup with static data; the habit engine is not wired yet. See [docs/plan-wxt.md](docs/plan-wxt.md).
 
-## Plant lab
+## Privacy
+
+Everything stays in your browser (`chrome.storage.local`). No account, no analytics, no network requests. The only permission is `storage`.
+
+## Install (unpacked)
 
 ```bash
 npm install
-npm run dev      # lab at /, mockup at /newtab.html
-npm run build    # type-check + production build
+npm run build
 ```
 
-- **Growth** (days of care): presets for start, 30 days, 3 months, 6 months and 1 year, or any day on the slider. "Play" runs day 0 → 365.
-- **Health** (0–100%): presets for healthy, thirsty and wilted. "Neglect → recovery" animates a wilt and a recovery.
-- **Compare all stages** shows the five stages side by side at the current health.
-- URL params make any state linkable: `?days=90&health=0.5` or `?grid=1&health=0.1`.
+Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and select `.output/chrome-mv3`. Open a new tab.
 
-The plant is fully procedural (`src/plant/ajisai.ts`): every visual is a function of `days` and `health`, with deterministic randomness so growth is continuous from one day to the next.
+## Develop
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | WXT dev mode: opens Chrome with the extension and reloads on save |
+| `npm run build` | Production build in `.output/chrome-mv3` |
+| `npm run zip` | Zip for distribution |
+| `npm run compile` | Type-check |
+| `npm run lab` | Plant lab (plain Vite page, not shipped): tune the ajisai's growth × health |
+
+The new tab accepts review params: `?hour=22&day=180&health=0.4&onboarding=1&settings=1`.
+
+## Structure
+
+```
+src/
+  entrypoints/newtab/   the new-tab page (WXT wires the manifest override)
+  plant/                procedural ajisai: every visual is a function of days of care × health
+  scene/                window scene: room, round window, sky by local time, textures
+  lab/                  plant lab code
+lab/                    plant lab page + its Vite config
+public/icon/            extension icons (source: assets/icon.svg)
+docs/                   plan, decisions and risk register
+```
+
+## License
+
+[MIT](LICENSE). Bundled: three.js (MIT), Shippori Mincho font (OFL-1.1), Lucide icons (ISC).
