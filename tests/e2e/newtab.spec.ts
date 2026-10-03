@@ -98,18 +98,22 @@ test('start over erases the plant and brings back onboarding in every tab', asyn
   await expect(b.locator('#onboarding')).toBeVisible();
 });
 
-// FIXME(tracker): fails in headless — the revisited tab doesn't reach data-gl=ready. Investigate before relying on it.
-test.fixme('20 open tabs: whichever tab you come back to renders in 3D', async ({ context }) => {
+// Headless Chromium reports every tab as visible, so the "release WebGL when hidden" path can't
+// run here (verify it manually). This covers the fallback: Chrome takes contexts from the oldest
+// tabs past ~16, and a tab that lost its context recovers when the user comes back to it.
+test('20 open tabs: a tab that lost its 3D shows the CSS window, then recovers on return', async ({ context }) => {
+  test.setTimeout(150_000);
   const first = await newTab(context);
   await seed(first);
-  const pages = [first];
-  for (let i = 1; i < 20; i++) pages.push(await newTab(context));
-  for (const p of [pages[0]!, pages[5]!, pages[19]!]) {
-    await p.bringToFront();
-    await p.dispatchEvent('body', 'pointerdown');
-    await expect(p.locator('#scene')).toHaveAttribute('data-gl', 'ready');
-    await expect(p.locator('#scene canvas')).toHaveCount(1);
-  }
+  for (let i = 1; i < 20; i++) await newTab(context);
+  await expect(first.locator('#scene')).toHaveAttribute('data-gl', 'lost');
+  await expect(first.locator('#fallback')).toBeVisible();
+  await expect(first.locator('#fallbackNote')).toBeHidden();
+  await first.bringToFront();
+  await first.mouse.click(640, 120);
+  await expect(first.locator('#scene')).toHaveAttribute('data-gl', 'ready');
+  await expect(first.locator('#fallback')).toBeHidden();
+  await expect(first.locator('#scene canvas')).toHaveCount(1);
 });
 
 test('without WebGL the page still works with a CSS window', async () => {
