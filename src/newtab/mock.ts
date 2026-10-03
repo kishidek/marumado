@@ -1,13 +1,11 @@
 import {
   Armchair,
-  Coffee,
   Droplet,
   Eye,
   Footprints,
   Hand,
   MonitorOff,
   PersonStanding,
-  Smile,
   Sun,
   Utensils,
   Wind,
@@ -30,6 +28,7 @@ export interface Habit {
   icon: IconNode;
 }
 
+/** MVP: yes/no habits only (mood scale and inverted caffeine question are post-MVP). */
 export const CATALOG: Habit[] = [
   { id: 'water', name: 'Water', question: 'Did you drink water in the last 2 hours?', every: 'Every 2 h', plantPart: 'Leaves stay firm', icon: Droplet },
   { id: 'stretch', name: 'Stretch', question: 'Did you stand up or stretch in the last hour?', every: 'Every 1 h', plantPart: 'Stems stand tall', icon: PersonStanding },
@@ -39,9 +38,7 @@ export const CATALOG: Habit[] = [
   { id: 'daylight', name: 'Daylight', question: 'Did you get some daylight today?', every: 'Once a day', plantPart: 'Deeper colour', icon: Sun },
   { id: 'breathe', name: 'Breathe', question: 'Did you take a 1-minute breathing break?', every: 'Every 3 h', plantPart: 'Fresh new leaves', icon: Wind },
   { id: 'lunch', name: 'Real lunch', question: 'Did you have lunch away from your desk?', every: 'Once a day', plantPart: 'More blooms', icon: Utensils },
-  { id: 'caffeine', name: 'Caffeine cut-off', question: 'Have you skipped coffee since 3 pm?', every: 'Once a day', plantPart: 'Calmer growth', icon: Coffee },
   { id: 'wrists', name: 'Wrists', question: 'Did you stretch your wrists and hands?', every: 'Every 3 h', plantPart: 'Stronger stems', icon: Hand },
-  { id: 'mood', name: 'Mood check', question: 'How are you feeling right now?', every: 'Once a day', plantPart: 'Bloom colour', icon: Smile },
   { id: 'shutdown', name: 'Shutdown', question: 'Did you close the laptop on time yesterday?', every: 'Once a day', plantPart: 'Rest overnight', icon: MonitorOff },
 ];
 

@@ -215,6 +215,21 @@ button {
   color: var(--muted);
 }
 
+.btn.danger {
+  border-color: #b4534a;
+  color: #b4534a;
+}
+
+.rename-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: 500 16px var(--serif);
+}
+
 .btn:disabled {
   opacity: 0.45;
   cursor: default;

@@ -51,7 +51,7 @@ Each phase ends with something that runs. The lab and mockup keep working throug
 | 5 | **Resilience** | WebGL lifecycle, fallback, context-invalidated banner, first-paint gradient | 20 open new tabs: every visible tab renders; WebGL disabled: static fallback shows |
 | 6 | **Backup** | Export / restore with validation, schema version, confirmation | Corrupt, old, future and foreign files are all rejected or migrated without touching data |
 | 7 | **QA matrix** | Playwright e2e on the built extension + manual checklist (§4) | All P0 and P1 cases in §4 have a test or a checked manual step |
-| 8 | **Store** | Icons, listing copy, screenshots, privacy policy page, unlisted beta | Approved as unlisted; testers install from the store |
+| 8 | **Store** (postponed) | Icons, listing copy, screenshots, privacy policy page, unlisted beta | Approved as unlisted; testers install from the store |
 | 9 | **Deck videos** | 3 evolutions (healthy 30 d, neglect, recovery) via the simulator | Recorded from the real engine |
 
 ## 4. Bugs, errors and conflicts by priority, with the WXT-based mitigation
@@ -99,28 +99,25 @@ Each phase ends with something that runs. The lab and mockup keep working throug
 | Browser zoom 50–200 %, very narrow windows | Responsive pass + screenshots in CI |
 | `three` bundle parse time (~147 KB gz) | Measure cold-open locally (`performance.mark`), named imports, budget < 300 ms to first paint |
 
-## 5. Decisions needed from you
+## 5. Decisions
 
-**Blocking (phase 2 needs these):**
+**Decided (2026-10-03):**
 
-1. **What counts as a "day of care"?** E.g. at least one "Yes" in the day, or ≥ 50 % of due questions answered "Yes". This drives all growth.
-2. **Decay numbers**: how many consecutive "Not yet" before visible droop, and how fast recovery is (e.g. 3 "No" → thirsty, 2 "Yes" → recovered).
-3. **Non yes/no habits**: "Mood check" (a scale, not yes/no) and "Caffeine cut-off" (inverted). Keep them with special answers, or drop them from the MVP catalog?
-4. **Rename later**: the name is only asked in onboarding. Add "Rename" to Settings? (Recommended: yes.)
-5. **Start over**: should Settings have "Reset plant" (with export prompt first)?
-
-**Before the store (phase 8):**
-
-6. **Product name and icon** for the listing (is it "Ajisai"?).
-7. **Chrome only, or also Edge / Firefox?** WXT makes it cheap; Firefox needs its own store review.
-8. **Search box** on the new tab: yes or no. If yes, Chrome policy requires using the user's default search via `chrome.search`.
-9. **Publishing**: Chrome Web Store developer account (one-time fee), publisher name, support email, and a public URL for the privacy policy (e.g. GitHub Pages).
-10. **Open source or private repo**, and license.
+1. **Day of care** = a workday on which **more than half of the active habits** got at least one counted "Yes" (3 habits → 2, 4 → 3, 5 → 3). Non-workdays neither count nor penalize.
+2. **Decay / recovery**: 3 consecutive "Not yet" on a habit → visibly thirsty; 2 "Yes" → recovered. Tunable constants in `engine/model.ts`.
+3. **Yes/no habits only** in the MVP. "Mood check" (scale) and "Caffeine cut-off" (inverted) are removed from the catalog (10 habits left).
+4. **Rename** lives in Settings ("Your plant").
+5. **Start over** lives in Settings, always offering an export first.
+6. **Product name**: pending (shortlist proposed).
+7. **Chrome only** for now.
+8. **No search box**: the page doesn't add or change search; the omnibox keeps the user's default engine.
+9. **No Chrome Web Store for now**: private use, installed unpacked. Phase 8 is postponed.
+10. **Public GitHub repo** under `kishidek`; license pending.
 
 **Can wait (post-MVP):**
 
-11. Garden graduation at 6–12 months: in the MVP or later, and what happens next (new seed? collection outside the window?).
-12. Holidays / days off beyond weekends.
+- Garden graduation at 6–12 months, and what happens next (new seed? collection outside the window?).
+- Holidays / days off beyond weekends.
 
 ## 6. Things not yet covered anywhere
 

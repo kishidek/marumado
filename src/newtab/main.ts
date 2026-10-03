@@ -240,6 +240,32 @@ function toggle(label: string, sub: string, checked = false) {
   return el('label', { className: 'setting-row' }, el('span', { className: 'grow' }, label, el('small', {}, sub)), input);
 }
 
+function renameRow() {
+  const input = el('input', { type: 'text', className: 'rename-input', value: mock.name, maxLength: 24, ariaLabel: 'Plant name' });
+  const save = el('button', { type: 'button', className: 'btn' }, 'Rename');
+  save.addEventListener('click', () => {
+    const name = input.value.trim();
+    if (!name || name === mock.name) return;
+    mock.name = name;
+    renderNeeds();
+    tick();
+    toast(`Your plant is now called ${name}.`);
+  });
+  return el('div', { className: 'setting-row' }, input, save);
+}
+
+/** "Start over" always offers a backup first: it is the only destructive action in the app. */
+function startOverRow() {
+  const btn = el('button', { type: 'button', className: 'btn danger' }, 'Start over…');
+  btn.addEventListener('click', () => {
+    const ok = confirm(
+      `Start over with a new seed?\n\n${mock.name}'s history will be erased from this browser. Export a backup first if you want to keep it.\n\n(Mock: nothing will be deleted.)`,
+    );
+    if (ok) toast('Start over (mock): would ask to export, then plant a new seed.');
+  });
+  return el('div', { className: 'setting-row' }, el('span', { className: 'grow' }, 'Start over', el('small', {}, 'Erase this plant and plant a new seed.')), btn);
+}
+
 function renderSettings() {
   const active = mock.needs.map((n) => habitById(n.habitId));
   const inactive = CATALOG.filter((h) => !active.includes(h));
@@ -271,6 +297,9 @@ function renderSettings() {
     dayToggles(MOCK.workHours.days),
     el('p', { className: 'note' }, `Questions only appear during these hours. ${mock.name} never loses health outside them.`),
 
+    el('h3', {}, 'Your plant'),
+    renameRow(),
+
     el('h3', {}, 'Away'),
     toggle('Vacation mode', 'Pause your plant while you’re away.'),
 
@@ -285,6 +314,7 @@ function renderSettings() {
       el('span', { className: 'grow' }, 'Stored only in this browser', el('small', {}, 'Nothing is ever sent anywhere.')),
     ),
     el('div', { className: 'data-actions' }, exportBtn, importBtn),
+    startOverRow(),
     el(
       'p',
       { className: 'note' },
