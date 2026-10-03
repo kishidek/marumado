@@ -1,4 +1,5 @@
 import { storage } from '#imports';
+import { makeCheckpoint, type Checkpoint } from '../engine/model';
 import type { AnswerEvent, Settings } from '../engine/types';
 
 /**
@@ -8,6 +9,8 @@ import type { AnswerEvent, Settings } from '../engine/types';
  */
 export const settingsItem = storage.defineItem<Settings | null>('local:settings', { fallback: null, version: 1 });
 export const eventsItem = storage.defineItem<AnswerEvent[]>('local:events', { fallback: [], version: 1 });
+/** Summary of everything before the oldest kept event (see compactIfNeeded). */
+export const checkpointItem = storage.defineItem<Checkpoint | null>('local:checkpoint', { fallback: null, version: 1 });
 /** UI memory that isn't plant data (e.g. the last day we nagged about backups). */
 export const backupReminderItem = storage.defineItem<string | null>('local:ui:backupReminderDay', { fallback: null });
 export const vacationReminderItem = storage.defineItem<string | null>('local:ui:vacationReminderDay', { fallback: null });
@@ -39,28 +42,57 @@ export const saveSettings = (update: (s: Settings) => Settings) =>
 export const plant = (settings: Settings) =>
   locked(async () => {
     await eventsItem.setValue([]);
+    await checkpointItem.setValue(null);
     await settingsItem.setValue(settings);
   });
 
 /** Restore: keep a snapshot of what was there, then replace in one locked step. */
-export const replaceAll = (settings: Settings, events: AnswerEvent[]) =>
+export const replaceAll = (settings: Settings, events: AnswerEvent[], checkpoint: Checkpoint | null = null) =>
   locked(async () => {
-    await previousItem.setValue({ settings: await settingsItem.getValue(), events: await eventsItem.getValue(), savedAt: Date.now() });
+    await previousItem.setValue({
+      settings: await settingsItem.getValue(),
+      events: await eventsItem.getValue(),
+      checkpoint: await checkpointItem.getValue(),
+      savedAt: Date.now(),
+    });
     await eventsItem.setValue(events);
+    await checkpointItem.setValue(checkpoint);
     await settingsItem.setValue(settings);
   });
 
 export const clearAll = () =>
   locked(async () => {
     await eventsItem.setValue([]);
+    await checkpointItem.setValue(null);
     await settingsItem.setValue(null);
   });
 
+const DAY = 86_400_000;
+/** Keep this much recent history as raw events (it's what the UI and cooldowns look at). */
+export const KEEP_DAYS = 90;
+/** Only compact once there is a meaningful amount to fold in. */
+const COMPACT_WHEN_OLDER_THAN_DAYS = 120;
+
+/**
+ * Folds events older than KEEP_DAYS into the checkpoint. Exact by construction (tested):
+ * the plant computed afterwards is identical. Runs under the write lock.
+ */
+export const compactIfNeeded = (now = Date.now()) =>
+  locked(async () => {
+    const settings = await settingsItem.getValue();
+    const events = await eventsItem.getValue();
+    if (!settings || !events.length) return false;
+    const oldest = Math.min(...events.map((e) => e.ts));
+    if (now - oldest < COMPACT_WHEN_OLDER_THAN_DAYS * DAY) return false;
+    const previous = await checkpointItem.getValue();
+    const cp = makeCheckpoint(settings, events, now - KEEP_DAYS * DAY, previous);
+    const kept = events.filter((e) => e.ts >= cp.untilTs - DAY); // slack: the replay re-filters by day
+    await checkpointItem.setValue(cp);
+    await eventsItem.setValue(kept);
+    return true;
+  });
+
 export function watchAll(onChange: () => void) {
-  const a = settingsItem.watch(onChange);
-  const b = eventsItem.watch(onChange);
-  return () => {
-    a();
-    b();
-  };
+  const stops = [settingsItem.watch(onChange), eventsItem.watch(onChange), checkpointItem.watch(onChange)];
+  return () => stops.forEach((stop) => stop());
 }

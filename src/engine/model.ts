@@ -60,36 +60,55 @@ export function onVacation(settings: Settings, d: Date): boolean {
 }
 
 /**
- * Replays the event log from planting until `now`. Pure and deterministic: the same
- * settings + events + now always give the same plant, in every tab.
+ * Everything the replay knows at the start of a day. Saved as a checkpoint so old events can be
+ * dropped (see compaction in storage): replaying from a checkpoint gives exactly the same plant.
  */
-export function computeState(settings: Settings, events: AnswerEvent[], now: number): PlantState {
+export interface Checkpoint {
+  /** Shift-day key; the checkpoint already includes every day before it. */
+  untilKey: string;
+  /** A timestamp inside that day, to restart the day loop from. */
+  untilTs: number;
+  careDays: number;
+  absence: number;
+  habits: Omit<HabitState, 'countedToday'>[];
+}
+
+interface Replay {
+  state: PlantState;
+  absence: number;
+}
+
+function replay(settings: Settings, events: AnswerEvent[], now: number, from: Checkpoint | null): Replay {
   const wh = settings.workHours;
   const active = new Map(settings.habits.map((h) => [h.id, h]));
-  const habits: HabitState[] = settings.habits.map((h) => ({
-    id: h.id,
-    health: TUNING.startHealth,
-    lastCountedTs: null,
-    lastAnswerTs: null,
-    lastAnswer: null,
-    countedToday: false,
-  }));
+  const addedTs = (h: HabitSetting) => h.addedAt ?? settings.createdAt;
+  const habits: HabitState[] = settings.habits.map((h) => {
+    const saved = from?.habits.find((x) => x.id === h.id);
+    // A habit (re)added after the checkpoint starts fresh.
+    const usable = saved && from && addedTs(h) < from.untilTs;
+    return usable
+      ? { ...saved, countedToday: false }
+      : { id: h.id, health: TUNING.startHealth, lastCountedTs: null, lastAnswerTs: null, lastAnswer: null, countedToday: false };
+  });
   const byId = Object.fromEntries(habits.map((h) => [h.id, h]));
 
   const byDay = new Map<string, AnswerEvent[]>();
   for (const e of [...events].sort((a, b) => a.ts - b.ts)) {
-    if (e.ts > now || e.ts < settings.createdAt || !active.has(e.habitId)) continue; // removed habits are frozen
+    const habit = active.get(e.habitId);
+    if (!habit || e.ts > now || e.ts < addedTs(habit)) continue; // removed habits are frozen; re-added ones start over
     const key = shiftKey(e.ts, wh);
+    if (from && key < from.untilKey) continue; // already inside the checkpoint
     byDay.set(key, [...(byDay.get(key) ?? []), e]);
   }
 
   const todayKey = shiftKey(now, wh);
   const plantedKey = shiftKey(settings.createdAt, wh);
-  let careDays = 0;
-  let absence = 0;
+  const addedKey = new Map(settings.habits.map((h) => [h.id, shiftKey(addedTs(h), wh)]));
+  let careDays = from?.careDays ?? 0;
+  let absence = from?.absence ?? 0;
   let answersToday = 0;
 
-  for (const day of shiftDatesBetween(settings.createdAt, now, wh)) {
+  for (const day of shiftDatesBetween(from?.untilTs ?? settings.createdAt, now, wh)) {
     const key = dateKey(day);
     const isToday = key === todayKey;
     const counted = new Set<string>();
@@ -112,25 +131,61 @@ export function computeState(settings: Settings, events: AnswerEvent[], now: num
 
     const workday = isWorkday(day, wh) && !onVacation(settings, day);
     if (!workday) continue;
-    if (yes.size > habits.length / 2) careDays++;
+    // Only habits that already existed that day count (a habit added later starts fresh).
+    const existing = habits.filter((h) => addedKey.get(h.id)! <= key);
+    if (existing.length && yes.size > existing.length / 2) careDays++;
     if (isToday || key === plantedKey) continue; // today isn't over; planting day is a grace day
 
     absence = counted.size === 0 ? absence + 1 : 0;
     if (absence > TUNING.maxAbsenceDays) continue; // dormant: stop losing health
-    for (const h of habits) if (!counted.has(h.id)) h.health = clamp01(h.health - TUNING.ignoredDayLoss);
+    for (const h of existing) {
+      if (addedKey.get(h.id) === key) continue; // the day a habit is added is a grace day too
+      if (!counted.has(h.id)) h.health = clamp01(h.health - TUNING.ignoredDayLoss);
+    }
   }
 
-  const avg = habits.reduce((s, h) => s + h.health, 0) / Math.max(1, habits.length);
+  const avg = habits.reduce((sum, h) => sum + h.health, 0) / Math.max(1, habits.length);
   const min = Math.min(...habits.map((h) => h.health));
   return {
-    habits,
-    byId,
-    health: clamp01(0.6 * avg + 0.4 * min),
-    careDays,
-    plantDays: careDays * TUNING.plantDaysPerCareDay,
-    calendarDay: shiftDatesBetween(settings.createdAt, now, { ...wh, start: '00:00', end: '00:00' }).length,
-    dormant: absence >= TUNING.maxAbsenceDays,
-    answersToday,
+    absence,
+    state: {
+      habits,
+      byId,
+      health: clamp01(0.6 * avg + 0.4 * min),
+      careDays,
+      plantDays: careDays * TUNING.plantDaysPerCareDay,
+      calendarDay: shiftDatesBetween(settings.createdAt, now, { ...wh, start: '00:00', end: '00:00' }).length,
+      dormant: absence >= TUNING.maxAbsenceDays,
+      answersToday,
+    },
+  };
+}
+
+/**
+ * Replays the event log (from planting, or from a checkpoint) until `now`. Pure and
+ * deterministic: the same inputs always give the same plant, in every tab.
+ */
+export function computeState(settings: Settings, events: AnswerEvent[], now: number, from: Checkpoint | null = null): PlantState {
+  return replay(settings, events, now, from).state;
+}
+
+/**
+ * Folds every day before the shift day of `untilTs` into a checkpoint. Events before that day
+ * can then be deleted without changing the plant.
+ */
+export function makeCheckpoint(settings: Settings, events: AnswerEvent[], untilTs: number, from: Checkpoint | null = null): Checkpoint {
+  const wh = settings.workHours;
+  const untilKey = shiftKey(untilTs, wh);
+  const day = shiftDate(untilTs, wh);
+  // Replay up to the start of that day: it is "today" in the replay, with no events yet.
+  const before = events.filter((e) => shiftKey(e.ts, wh) < untilKey);
+  const { state, absence } = replay(settings, before, day.getTime(), from);
+  return {
+    untilKey,
+    untilTs: day.getTime(),
+    careDays: state.careDays,
+    absence,
+    habits: state.habits.map(({ countedToday: _, ...h }) => h),
   };
 }
 

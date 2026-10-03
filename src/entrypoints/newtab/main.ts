@@ -1,6 +1,6 @@
 import { Settings as SettingsIcon, Sprout } from 'lucide';
 import { catalogHabit, DAILY } from '../../engine/catalog';
-import { computeState, potNumber, type PlantState } from '../../engine/model';
+import { computeState, potNumber, type Checkpoint, type PlantState } from '../../engine/model';
 import { availability, duePrompts, minutesUntilDue, wouldCount, type Availability } from '../../engine/scheduler';
 import type { Answer, AnswerEvent, HabitSetting, Settings } from '../../engine/types';
 import { buildAjisai } from '../../plant/ajisai';
@@ -9,7 +9,7 @@ import { createGlHost } from '../../scene/gl-host';
 import { createWindowScene } from '../../scene/window-scene';
 import { shiftBack, simulateDays, type Pattern } from '../../engine/simulate';
 import { installErrorLog, logError } from '../../storage/error-log';
-import { appendEvent, backupReminderItem, vacationReminderItem, clearAll, eventsItem, plant, replaceAll, settingsItem, watchAll } from '../../storage/items';
+import { appendEvent, backupReminderItem, checkpointItem, compactIfNeeded, vacationReminderItem, clearAll, eventsItem, plant, replaceAll, settingsItem, watchAll } from '../../storage/items';
 import { $, el, icon, ordinal, setBackgroundInert, toast } from '../../ui/dom';
 import { initHelp } from '../../ui/help';
 import { habitIcon } from '../../ui/icons';
@@ -29,6 +29,7 @@ const preview = {
 
 let settings: Settings | null = null;
 let events: AnswerEvent[] = [];
+let checkpoint: Checkpoint | null = null;
 let state: PlantState | null = null;
 let loaded = false;
 
@@ -74,7 +75,7 @@ function loop(now: number) {
   needsRender = false;
 }
 
-const reduceMotion = () => !!settings?.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduceMotion = () => !!settings?.reduceMotion || !!settings?.lightMode || matchMedia('(prefers-reduced-motion: reduce)').matches;
 const targetHealth = () => preview.health ?? state?.health ?? 1;
 
 /** Health on screen eases toward the real value, so an answer visibly perks the plant up (or down). */
@@ -277,7 +278,7 @@ async function answer(habitId: string, kind: Answer) {
   else if (!counts) toast('Noted. That one already counted recently.');
   else toast(kind === 'yes' ? `Nice. ${s.plantName} felt that ${name}.` : 'No worries. Try to fit it in soon.');
 
-  const after = computeState(s, events, now);
+  const after = computeState(s, events, now, checkpoint);
   if (duePrompts(s, after, now).length === 0) showDone();
   render();
 }
@@ -291,7 +292,7 @@ function storageFailed(err: unknown) {
 
 async function reload() {
   try {
-    [settings, events] = await Promise.all([settingsItem.getValue(), eventsItem.getValue()]);
+    [settings, events, checkpoint] = await Promise.all([settingsItem.getValue(), eventsItem.getValue(), checkpointItem.getValue()]);
   } catch (err) {
     storageFailed(err);
   }
@@ -303,6 +304,7 @@ function render() {
   if (!loaded) return;
   const now = Date.now();
   document.documentElement.classList.toggle('reduce-motion', !!settings?.reduceMotion);
+  gl.setLight(!!settings?.lightMode);
 
   if (!settings) {
     state = null;
@@ -329,7 +331,7 @@ function render() {
   $('needs').hidden = false;
   $('openSettings').hidden = false;
   $('openHelp').hidden = false;
-  state = computeState(settings, events, now);
+  state = computeState(settings, events, now, checkpoint);
   updatePlant();
   renderNeeds(now);
   renderCard(now);
@@ -462,7 +464,7 @@ if (DEV) {
 installErrorLog();
 $('openSettings').append(icon(SettingsIcon, 20));
 $('openSettings').addEventListener('click', () => openSettings(true));
-initSettings({ getSettings: () => settings, getEvents: () => events });
+initSettings({ getSettings: () => settings, getEvents: () => events, getCheckpoint: () => checkpoint });
 initHelp({ plantName: () => settings?.plantName ?? 'your ajisai', reduceMotion: () => !!settings?.reduceMotion, settingsOpen });
 mountDevControls();
 
@@ -478,4 +480,4 @@ setInterval(render, 30_000);
 // The plant panel shows itself briefly, then folds into a pill (right away on small screens).
 const smallScreen = innerWidth <= 760 || innerHeight <= 700;
 setTimeout(() => $('needs').classList.add('collapsed'), smallScreen ? 0 : 6000);
-void reload();
+void reload().then(() => compactIfNeeded().catch(logError)); // once per tab: fold old history into a checkpoint

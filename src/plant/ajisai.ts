@@ -176,12 +176,12 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
       const a = angleAt((k + 0.5) / M);
       const dir = out.clone().multiplyScalar(Math.sin(a)).addScaledVector(UP, Math.cos(a));
       dirs.push(dir);
-      pts.push(pts[k].clone().addScaledVector(dir, step));
+      pts.push(pts[k]!.clone().addScaledVector(dir, step));
     }
     const sample = (arc: number) => {
       const f = Math.min(Math.max(arc / step, 0), M - 1e-6);
       const k = Math.floor(f);
-      return { p: pts[k].clone().lerp(pts[k + 1], f - k), dir: dirs[k] };
+      return { p: pts[k]!.clone().lerp(pts[k + 1]!, f - k), dir: dirs[k]! };
     };
     pts.forEach((p) => track(p));
 
@@ -189,7 +189,7 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
     const woodiness = clamp01(age / 200);
     stemGeos.push(
       createTaperedTube(
-        [0, 4, 8, 12, 16, 20].map((k) => pts[k]),
+        [0, 4, 8, 12, 16, 20].map((k) => pts[k]!),
         r0,
         r0 * 0.45,
         (t, c) => c.copy(STEM_GREEN).lerp(STEM_WOOD, woodiness * Math.pow(1 - t, 1.5)).lerp(LEAF_WILTED, wilt * 0.3),
@@ -203,7 +203,7 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
       const fade = rank > VISIBLE_LEAF_PAIRS - 1 ? VISIBLE_LEAF_PAIRS - rank : 1;
       const grow = clamp01((nodesF - i) / 1.3);
       if (grow < 0.02) continue;
-      const { p } = sample(nodeArc[i]);
+      const { p } = sample(nodeArc[i]!);
 
       for (let side = 0; side < 2; side++) {
         const phi = theta + (i * Math.PI) / 2 + side * Math.PI + (rnd(seed, s, i, side, 4) - 0.5) * 0.35;
@@ -326,7 +326,7 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
     const mesh = new THREE.InstancedMesh(geo, material, matrices.length);
     matrices.forEach((m, i) => {
       mesh.setMatrixAt(i, m);
-      mesh.setColorAt(i, colors[i]);
+      mesh.setColorAt(i, colors[i]!);
     });
     mesh.computeBoundingSphere();
     instanced.push(mesh);

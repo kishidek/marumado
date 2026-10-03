@@ -2,10 +2,7 @@
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    // WXT enables this by default. The ported plant/scene code predates it;
-    // re-enable (and fix) before writing src/engine (plan, phase 2).
-    "noUncheckedIndexedAccess": false
+    "noUnusedParameters": true
   },
   "include": ["src", "lab", "tests", ".wxt/wxt.d.ts"]
 }

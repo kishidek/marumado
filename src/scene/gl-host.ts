@@ -11,22 +11,15 @@ import * as THREE from 'three';
  */
 export type GlState = 'ready' | 'released' | 'lost' | 'unsupported';
 
-const RELEASE_AFTER_HIDDEN_MS = 20_000;
+/** Short: tabs left behind give their GPU slot back quickly (Chrome allows ~16 per extension). */
+const RELEASE_AFTER_HIDDEN_MS = 5_000;
 
 export interface GlHost {
   readonly state: GlState;
   render(scene: THREE.Scene, camera: THREE.Camera): void;
+  /** Light mode: lower resolution and no antialiasing (rebuilds the context if it changes). */
+  setLight(on: boolean): void;
   resize(width: number, height: number): void;
-}
-
-export function supportsWebGL2(): boolean {
-  try {
-    const gl = document.createElement('canvas').getContext('webgl2');
-    gl?.getExtension('WEBGL_lose_context')?.loseContext(); // don't hold a context slot for the probe
-    return !!gl;
-  } catch {
-    return false;
-  }
 }
 
 export function createGlHost(
@@ -37,6 +30,7 @@ export function createGlHost(
   let state: GlState = 'released';
   let size = { w: innerWidth, h: innerHeight };
   let releaseTimer = 0;
+  let light = false;
 
   const set = (s: GlState) => {
     state = s;
@@ -47,20 +41,25 @@ export function createGlHost(
   function acquire() {
     if (state === 'ready' || state === 'unsupported') return;
     release();
+    // No separate "is WebGL there?" probe: it would spend a second context slot per tab.
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: !!opts.capture });
+      renderer = new THREE.WebGLRenderer({ antialias: !light, preserveDrawingBuffer: !!opts.capture, powerPreference: light ? 'low-power' : 'default' });
     } catch {
       set('unsupported');
       return;
     }
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+    renderer.setPixelRatio(light ? 1 : Math.min(devicePixelRatio, 1.75));
     renderer.setSize(size.w, size.h);
     const canvas = renderer.domElement;
+    // Loss events arrive asynchronously: ignore them once this canvas is no longer the live one
+    // (e.g. we released it ourselves and already created a new context).
+    const current = () => renderer?.domElement === canvas;
     canvas.addEventListener('webglcontextlost', (e) => {
+      if (!current()) return;
       e.preventDefault(); // allow a restore if the browser offers one
       set('lost');
     });
-    canvas.addEventListener('webglcontextrestored', () => set('ready'));
+    canvas.addEventListener('webglcontextrestored', () => current() && set('ready'));
     container.appendChild(canvas);
     set('ready');
   }
@@ -68,7 +67,8 @@ export function createGlHost(
   function release() {
     if (!renderer) return;
     renderer.dispose();
-    renderer.forceContextLoss();
+    // Only force the loss on a live context (asking on a lost one logs a WebGL warning).
+    if (!renderer.getContext().isContextLost()) renderer.forceContextLoss();
     renderer.domElement.remove();
     renderer = null;
     if (state !== 'unsupported') set('released');
@@ -88,8 +88,10 @@ export function createGlHost(
   addEventListener('focus', acquire);
   addEventListener('pointerdown', acquire);
 
-  if (!supportsWebGL2()) set('unsupported');
-  else if (document.visibilityState === 'visible') acquire();
+  // Back/forward cache or closing: give the slot back right away.
+  addEventListener('pagehide', release);
+
+  if (document.visibilityState === 'visible') acquire();
   else set('released');
   // A tab opened in the background (e.g. session restore) waits until it is shown.
 
@@ -99,6 +101,14 @@ export function createGlHost(
     },
     render(scene, camera) {
       if (state === 'ready' && renderer) renderer.render(scene, camera);
+    },
+    setLight(on) {
+      if (on === light) return;
+      light = on;
+      if (renderer) {
+        release();
+        if (document.visibilityState === 'visible') acquire();
+      }
     },
     resize(width, height) {
       size = { w: width, h: height };

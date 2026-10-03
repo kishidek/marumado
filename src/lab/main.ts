@@ -89,8 +89,8 @@ function rebuild() {
     const widths = STAGES.map((st) => slotWidth(st.days));
     let x = -widths.reduce((a, b) => a + b, 0) / 2;
     builds.forEach((p, i) => {
-      p.build.group.position.x = x + widths[i] / 2;
-      x += widths[i];
+      p.build.group.position.x = x + widths[i]! / 2;
+      x += widths[i]!;
     });
     placed = builds;
   } else {
@@ -180,7 +180,7 @@ function chips(containerId: string, items: { label: string }[], onPick: (i: numb
 
 const stageButtons = chips('stageChips', STAGES, (i) => {
   stopAnimations();
-  state.days = STAGES[i].days;
+  state.days = STAGES[i]!.days;
   setGrid(false);
   rebuild();
   fitToPlants(true);
@@ -188,7 +188,7 @@ const stageButtons = chips('stageChips', STAGES, (i) => {
 });
 const healthButtons = chips('healthChips', HEALTH_PRESETS, (i) => {
   stopAnimations();
-  state.health = HEALTH_PRESETS[i].value;
+  state.health = HEALTH_PRESETS[i]!.value;
   rebuild();
   syncUI();
 });
@@ -204,9 +204,9 @@ function syncUI() {
   healthInput.value = String(Math.round(state.health * 100));
   $('daysOut').textContent = state.grid ? 'all stages' : describeDays(Math.round(state.days));
   $('healthOut').textContent = `${Math.round(state.health * 100)}%`;
-  stageButtons.forEach((b, i) => b.setAttribute('aria-pressed', String(!state.grid && STAGES[i].days === state.days)));
+  stageButtons.forEach((b, i) => b.setAttribute('aria-pressed', String(!state.grid && STAGES[i]!.days === state.days)));
   healthButtons.forEach((b, i) =>
-    b.setAttribute('aria-pressed', String(Math.abs(HEALTH_PRESETS[i].value - state.health) < 0.005)),
+    b.setAttribute('aria-pressed', String(Math.abs(HEALTH_PRESETS[i]!.value - state.health) < 0.005)),
   );
   gridInput.checked = state.grid;
   daysInput.disabled = state.grid;
@@ -299,7 +299,7 @@ function updateStats() {
     },
     { stems: 0, leaves: 0, fallen: 0, heads: 0, florets: 0 },
   );
-  const single = placed.length === 1 ? placed[0].build : null;
+  const single = placed.length === 1 ? placed[0]!.build : null;
   const rows: [string, string][] = [
     ['Triangles', renderer.info.render.triangles.toLocaleString()],
     ['Draw calls', String(renderer.info.render.calls)],

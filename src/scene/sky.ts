@@ -51,9 +51,10 @@ const c = (hex: string) => new THREE.Color(hex);
 export function skyAt(hour: number): SkyPalette {
   const h = ((hour % 24) + 24) % 24;
   let i = 0;
-  while (i < KEYS.length - 2 && KEYS[i + 1].h <= h) i++;
-  const a = KEYS[i];
-  const b = KEYS[i + 1];
+  while (i < KEYS.length - 2 && KEYS[i + 1]!.h <= h) i++;
+  // KEYS spans 0–24 h, so i and i + 1 are always in range.
+  const a = KEYS[i]!;
+  const b = KEYS[i + 1]!;
   const t = (h - a.h) / (b.h - a.h);
   const mix = (x: string, y: string) => c(x).lerp(c(y), t);
   const num = (x: number, y: number) => x + (y - x) * t;

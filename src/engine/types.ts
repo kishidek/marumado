@@ -15,6 +15,8 @@ export interface HabitSetting {
   id: string;
   /** Minutes between questions; 1440 means "once a workday". */
   intervalMin: number;
+  /** When the habit joined (epoch ms). Missing = since planting. Days before it don't count. */
+  addedAt?: number;
 }
 
 export interface WorkHours {
@@ -38,5 +40,7 @@ export interface Settings {
   createdAt: number;
   vacations: Vacation[];
   reduceMotion: boolean;
+  /** Lower resolution, no antialiasing, no answer animations: for slower computers. */
+  lightMode?: boolean;
   lastExportAt: number | null;
 }

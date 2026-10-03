@@ -121,8 +121,8 @@ export function createTaperedTube(
     const t = i / tubular;
     curve.getPointAt(t, p);
     const r = r0 + (r1 - r0) * t;
-    const N = frames.normals[i];
-    const B = frames.binormals[i];
+    const N = frames.normals[i]!;
+    const B = frames.binormals[i]!;
     colorAt(t, c);
     for (let j = 0; j <= radial; j++) {
       const v = (j / radial) * Math.PI * 2;
@@ -174,7 +174,7 @@ export function createPot(r: number): Pot {
       [1.0, 0.78],
       [0.93, 0.92],
       [0.95, 0.98],
-    ].map(([x, y]) => new THREE.Vector2(r * x, h * y)),
+    ].map(([x, y]) => new THREE.Vector2(r * x!, h * y!)),
   ).getPoints(26);
   const profile = [
     new THREE.Vector2(0, h * 0.02),

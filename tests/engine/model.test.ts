@@ -73,3 +73,14 @@ describe('computeState', () => {
     expect(computeState(settings(), e, at(5, 12)).byId.water!.health).toBeCloseTo(TUNING.startHealth);
   });
 });
+
+describe('habits added later', () => {
+  it('a habit added after weeks starts fresh instead of being punished for the past', () => {
+    const base = settings({ habits: [{ id: 'water', intervalMin: 120 }, { id: 'stretch', intervalMin: 60 }] });
+    const e = [];
+    for (let d = 5; d <= 23; d++) e.push(ev(at(d, 10), 'water', 'yes'), ev(at(d, 10), 'stretch', 'yes'));
+    const added = { ...base, habits: [...base.habits, { id: 'eyes', intervalMin: 30, addedAt: at(23, 12) }] };
+    const s = computeState(added, e, at(26, 8));
+    expect(s.byId.eyes!.health).toBeCloseTo(TUNING.startHealth); // Mon 26: no workday since it was added has ended
+  });
+});

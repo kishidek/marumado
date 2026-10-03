@@ -118,7 +118,7 @@ export function createWindowScene(): WindowScene {
     scene.add(mesh);
     return { ...l, mat };
   });
-  const pagoda = new THREE.Mesh(pagodaGeometry(), layers[1].mat);
+  const pagoda = new THREE.Mesh(pagodaGeometry(), layers[1]!.mat);
   pagoda.scale.setScalar(1.35);
   pagoda.position.set(4.2, -0.75, -21.9);
   scene.add(pagoda);
@@ -174,8 +174,8 @@ export function createWindowScene(): WindowScene {
     camera,
     setHour(hour) {
       const p = skyAt(hour);
-      skyMat.uniforms.top.value.copy(p.top);
-      skyMat.uniforms.bottom.value.copy(p.bottom);
+      skyMat.uniforms.top!.value.copy(p.top);
+      skyMat.uniforms.bottom!.value.copy(p.bottom);
       starMat.opacity = p.stars;
       for (const l of layers) l.mat.color.copy(p.ink).lerp(p.haze, l.haze);
 

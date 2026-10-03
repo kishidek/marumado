@@ -221,3 +221,45 @@ test('200 % zoom / short window: question and plant panel never overlap', async 
     await page.locator('#ask .btn.primary').click({ trial: true }); // actionable, nothing on top of it
   }
 });
+
+test('old history is compacted into a checkpoint without changing the plant', async ({ context }) => {
+  const { simulateDays } = await import('../../src/engine/simulate');
+  const { computeState } = await import('../../src/engine/model');
+  const DAY = 86_400_000;
+  const now = Date.now();
+  const s = {
+    plantName: 'Aoi',
+    habits: [{ id: 'water', intervalMin: 120 }, { id: 'stretch', intervalMin: 60 }, { id: 'eyes', intervalMin: 30 }],
+    workHours: { start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5] },
+    createdAt: now - 200 * DAY,
+    vacations: [],
+    reduceMotion: false,
+    lastExportAt: now,
+  };
+  const events = [...simulateDays(s, now - 60 * DAY, 140, 'healthy', 1), ...simulateDays(s, now, 60, 'mixed', 2)];
+  const expected = computeState(s, events, now);
+
+  const page = await newTab(context);
+  await page.evaluate((data) => chrome.storage.local.set(data), { settings: s, events });
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => chrome.storage.local.get('checkpoint').then((r) => !!r.checkpoint))).toBe(true);
+  const left = await page.evaluate(() => chrome.storage.local.get('events').then((r) => r.events as { ts: number }[]));
+  expect(left.length).toBeLessThan(events.length);
+  expect(Math.min(...left.map((e) => e.ts))).toBeGreaterThan(now - 92 * DAY);
+
+  await page.reload(); // now computed from checkpoint + recent events
+  await expect(page.locator('#plantMeta')).toContainText(`Day ${expected.calendarDay}`);
+  const widths = await page.locator('.meter i').evaluateAll((els) => els.map((e) => (e as HTMLElement).style.width));
+  expect(widths).toEqual(expected.habits.map((h) => `${Math.round(h.health * 100)}%`));
+});
+
+test('light mode rebuilds the 3D context without antialiasing', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page);
+  const antialias = () => page.evaluate(() => (document.querySelector('#scene canvas') as HTMLCanvasElement | null)?.getContext('webgl2')?.getContextAttributes()?.antialias);
+  await expect.poll(antialias).toBe(true);
+  await page.click('#openSettings');
+  await page.locator('label.setting-row', { hasText: 'Light mode' }).locator('input').check();
+  await expect.poll(antialias).toBe(false);
+  await expect(page.locator('#scene')).toHaveAttribute('data-gl', 'ready');
+});

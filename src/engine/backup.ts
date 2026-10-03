@@ -1,4 +1,5 @@
 import { CATALOG } from './catalog';
+import type { Checkpoint } from './model';
 import type { AnswerEvent, Settings } from './types';
 
 export const SCHEMA_VERSION = 1;
@@ -9,12 +10,36 @@ export interface Backup {
   exportedAt: number;
   settings: Settings;
   events: AnswerEvent[];
+  /** Summary of history older than the events (present once the log has been compacted). */
+  checkpoint?: Checkpoint | null;
   /** Optional local error log (see storage/error-log.ts); ignored on restore. */
   diagnostics?: { ts: number; message: string; version: string }[];
 }
 
-export function makeBackup(settings: Settings, events: AnswerEvent[], now: number, diagnostics: Backup['diagnostics'] = []): Backup {
-  return { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: now, settings, events, diagnostics };
+export function makeBackup(
+  settings: Settings,
+  events: AnswerEvent[],
+  now: number,
+  diagnostics: Backup['diagnostics'] = [],
+  checkpoint: Checkpoint | null = null,
+): Backup {
+  return { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: now, settings, events, checkpoint, diagnostics };
+}
+
+function parseCheckpoint(x: unknown): Checkpoint | null | 'bad' {
+  if (x === undefined || x === null) return null;
+  if (
+    !isObj(x) ||
+    typeof x.untilKey !== 'string' ||
+    !isNum(x.untilTs) ||
+    !isNum(x.careDays) ||
+    !isNum(x.absence) ||
+    !Array.isArray(x.habits) ||
+    !x.habits.every((h) => isObj(h) && typeof h.id === 'string' && isNum(h.health))
+  ) {
+    return 'bad';
+  }
+  return x as unknown as Checkpoint;
 }
 
 export type ParseResult = { ok: true; backup: Backup } | { ok: false; error: string };
@@ -64,12 +89,15 @@ export function parseBackup(text: string): ParseResult {
 
   const settings: Settings = {
     plantName: s.plantName.trim().slice(0, 24),
-    habits: (s.habits as { id: string; intervalMin: number }[]).map((h) => ({ id: h.id, intervalMin: h.intervalMin })),
+    habits: (s.habits as { id: string; intervalMin: number; addedAt?: unknown }[]).map((h) => ({ id: h.id, intervalMin: h.intervalMin, ...(isNum(h.addedAt) ? { addedAt: h.addedAt } : {}) })),
     workHours: { start: s.workHours.start as string, end: s.workHours.end as string, days: s.workHours.days as number[] },
     createdAt: s.createdAt,
     vacations: (s.vacations as unknown[]).filter((v): v is { from: number; to: number | null } => isObj(v) && isNum(v.from) && (v.to === null || isNum(v.to))),
     reduceMotion: s.reduceMotion === true,
+    lightMode: s.lightMode === true,
     lastExportAt: isNum(s.lastExportAt) ? s.lastExportAt : null,
   };
-  return { ok: true, backup: { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: isNum(raw.exportedAt) ? raw.exportedAt : 0, settings, events } };
+  const checkpoint = parseCheckpoint(raw.checkpoint);
+  if (checkpoint === 'bad') return { ok: false, error: 'The backup’s history summary is damaged.' };
+  return { ok: true, backup: { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: isNum(raw.exportedAt) ? raw.exportedAt : 0, settings, events, checkpoint } };
 }

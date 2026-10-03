@@ -1,6 +1,7 @@
 import { ShieldCheck, X } from 'lucide';
 import { makeBackup, parseBackup } from '../engine/backup';
 import { CATALOG, catalogHabit, INTERVAL_OPTIONS, intervalLabel, MAX_HABITS, MIN_HABITS } from '../engine/catalog';
+import type { Checkpoint } from '../engine/model';
 import type { AnswerEvent, Settings } from '../engine/types';
 import { clearAll, errorsItem, replaceAll, saveSettings } from '../storage/items';
 import { $, el, icon, relativeTime, setBackgroundInert, toast } from './dom';
@@ -10,6 +11,7 @@ import { daysPicker, hoursPicker } from './pickers';
 interface Ctx {
   getSettings: () => Settings | null;
   getEvents: () => AnswerEvent[];
+  getCheckpoint: () => Checkpoint | null;
 }
 
 let ctx: Ctx;
@@ -41,10 +43,10 @@ function toggleRow(label: string, sub: string, checked: boolean, onChange: (on: 
   return el('label', { className: 'setting-row' }, el('span', { className: 'grow' }, label, el('small', {}, sub)), input);
 }
 
-export async function downloadBackup(settings: Settings, events: AnswerEvent[]) {
+export async function downloadBackup(settings: Settings, events: AnswerEvent[], checkpoint: Checkpoint | null) {
   const now = Date.now();
   const diagnostics = await errorsItem.getValue().catch(() => []);
-  const blob = new Blob([JSON.stringify(makeBackup(settings, events, now, diagnostics), null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(makeBackup(settings, events, now, diagnostics, checkpoint), null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const date = new Date(now).toISOString().slice(0, 10);
   const a = el('a', { href: url, download: `marumado-${settings.plantName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${date}.json` });
@@ -93,7 +95,7 @@ function render() {
   const addChips = addable.map((c) => {
     const b = el('button', { type: 'button', className: 'chip', disabled: active.length >= MAX_HABITS }, `+ ${c.name}`);
     b.addEventListener('click', async () => {
-      await saveSettings((x) => ({ ...x, habits: [...x.habits, { id: c.id, intervalMin: c.defaultIntervalMin }] }));
+      await saveSettings((x) => ({ ...x, habits: [...x.habits, { id: c.id, intervalMin: c.defaultIntervalMin, addedAt: Date.now() }] }));
       render();
     });
     return b;
@@ -122,7 +124,7 @@ function render() {
   const onVacation = s.vacations.some((v) => v.to === null);
   const exportBtn = el('button', { type: 'button', className: 'btn primary' }, 'Export backup');
   exportBtn.addEventListener('click', async () => {
-    await downloadBackup(current(), ctx.getEvents());
+    await downloadBackup(current(), ctx.getEvents(), ctx.getCheckpoint());
     toast('Backup downloaded.');
   });
   const file = el('input', { type: 'file', accept: 'application/json,.json', hidden: true });
@@ -137,7 +139,7 @@ function render() {
     }
     const b = parsed.backup;
     if (!confirm(`Replace ${current().plantName} with ${b.settings.plantName} from this backup (${b.events.length} answers)?`)) return;
-    await replaceAll(b.settings, b.events);
+    await replaceAll(b.settings, b.events, b.checkpoint ?? null);
     toast(`${b.settings.plantName} is back.`);
     render();
   });
@@ -147,7 +149,7 @@ function render() {
   startOver.addEventListener('click', async () => {
     const cur = current();
     if (!confirm(`Start over with a new seed?\n\n${cur.plantName}'s history will be erased from this browser.`)) return;
-    if (confirm('Download a backup of the current plant first?')) await downloadBackup(cur, ctx.getEvents());
+    if (confirm('Download a backup of the current plant first?')) await downloadBackup(cur, ctx.getEvents(), ctx.getCheckpoint());
     await clearAll();
     openSettings(false);
   });
@@ -177,6 +179,7 @@ function render() {
 
     el('h3', {}, 'Display'),
     toggleRow('Reduce motion', 'Fewer animations.', s.reduceMotion, (on) => saveSettings((x) => ({ ...x, reduceMotion: on }))),
+    toggleRow('Light mode', 'For slower computers: lower resolution, no animations.', !!s.lightMode, (on) => saveSettings((x) => ({ ...x, lightMode: on }))),
 
     el('h3', {}, 'Your data'),
     el('div', { className: 'setting-row' }, icon(ShieldCheck, 20), el('span', { className: 'grow' }, 'Stored only in this browser', el('small', {}, 'Nothing is ever sent anywhere.'))),
