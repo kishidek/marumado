@@ -8,6 +8,7 @@ import {
   createTaperedTube,
 } from './geometry';
 import { clamp01, lerp, rnd, smoothstep } from './math';
+import { glazeTexture } from '../scene/textures';
 
 export interface AjisaiParams {
   /** Days of care (growth layer). Not capped: the plant keeps changing. */
@@ -51,7 +52,8 @@ const materials = {
   leaf: new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }),
   floret: new THREE.MeshLambertMaterial({ side: THREE.DoubleSide }),
   stem: new THREE.MeshLambertMaterial({ vertexColors: true }),
-  pot: new THREE.MeshPhongMaterial({ color: '#2d4a78', shininess: 70, specular: new THREE.Color('#3a3a3a') }),
+  pot: new THREE.MeshPhongMaterial({ map: glazeTexture(), shininess: 80, specular: new THREE.Color('#4a4a4a') }),
+  saucer: new THREE.MeshPhongMaterial({ color: '#2a3550', shininess: 60, specular: new THREE.Color('#3a3a3a') }),
   soil: new THREE.MeshLambertMaterial({ color: '#3a2a1f' }),
   shadow: new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }),
 };
@@ -87,8 +89,9 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
   // --- Pot, soil, contact shadow -------------------------------------------------------
   const potR = potRadiusFor(days);
   const pot = createPot(potR);
-  ownedGeometries.push(pot.geometry);
+  ownedGeometries.push(pot.geometry, pot.saucer);
   group.add(new THREE.Mesh(pot.geometry, materials.pot));
+  group.add(new THREE.Mesh(pot.saucer, materials.saucer));
 
   const soilGeo = new THREE.CircleGeometry(pot.soilRadius, 28).rotateX(-Math.PI / 2);
   ownedGeometries.push(soilGeo);
@@ -96,7 +99,7 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
   soil.position.y = pot.soilY;
   group.add(soil);
 
-  const shadowGeo = new THREE.PlaneGeometry(potR * 3.4, potR * 3.4).rotateX(-Math.PI / 2);
+  const shadowGeo = new THREE.PlaneGeometry(potR * 3.8, potR * 3.8).rotateX(-Math.PI / 2);
   ownedGeometries.push(shadowGeo);
   const shadow = new THREE.Mesh(shadowGeo, materials.shadow);
   shadow.position.y = 0.0015;

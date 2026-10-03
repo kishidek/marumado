@@ -151,30 +151,62 @@ export function createTaperedTube(
 
 export interface Pot {
   geometry: THREE.BufferGeometry;
+  saucer: THREE.BufferGeometry;
   height: number;
   soilY: number;
   soilRadius: number;
 }
 
-/** Glazed round pot with a small lip; height ≈ radius. */
+/**
+ * Round-bellied Japanese pot on a foot ring, standing on a shallow saucer.
+ * UV v runs foot (0) → rim → inside (1), which the glaze texture relies on.
+ */
 export function createPot(r: number): Pot {
-  const h = r;
+  const saucerH = r * 0.07;
+  const h = r * 1.05;
+  const base = saucerH * 0.6;
+  const outline = new THREE.SplineCurve(
+    [
+      [0.66, 0.05],
+      [0.8, 0.12],
+      [0.96, 0.32],
+      [1.03, 0.55],
+      [1.0, 0.78],
+      [0.93, 0.92],
+      [0.95, 0.98],
+    ].map(([x, y]) => new THREE.Vector2(r * x, h * y)),
+  ).getPoints(26);
   const profile = [
-    [0, 0],
-    [r * 0.72, 0],
-    [r * 0.76, r * 0.03],
-    [r * 0.9, h * 0.5],
-    [r * 0.99, h * 0.9],
-    [r * 1.05, h * 0.94],
-    [r * 1.05, h],
-    [r * 0.95, h],
-    [r * 0.93, h * 0.88],
-  ].map(([x, y]) => new THREE.Vector2(x, y));
+    new THREE.Vector2(0, h * 0.02),
+    new THREE.Vector2(r * 0.6, h * 0.02),
+    new THREE.Vector2(r * 0.62, 0),
+    new THREE.Vector2(r * 0.68, 0),
+    ...outline,
+    new THREE.Vector2(r * 1.0, h), // lip
+    new THREE.Vector2(r * 0.97, h * 1.01),
+    new THREE.Vector2(r * 0.9, h * 0.97),
+    new THREE.Vector2(r * 0.88, h * 0.86),
+  ].map((v) => new THREE.Vector2(v.x, v.y + base));
+
+  const saucer = new THREE.LatheGeometry(
+    [
+      [0, 0],
+      [r * 0.92, 0],
+      [r * 0.99, saucerH * 0.4],
+      [r * 1.03, saucerH],
+      [r * 0.98, saucerH],
+      [r * 0.9, saucerH * 0.45],
+      [0, saucerH * 0.45],
+    ].map(([x, y]) => new THREE.Vector2(x, y)),
+    40,
+  );
+
   return {
-    geometry: new THREE.LatheGeometry(profile, 32),
-    height: h,
-    soilY: h * 0.88,
-    soilRadius: r * 0.93,
+    geometry: new THREE.LatheGeometry(profile, 40),
+    saucer,
+    height: h + base,
+    soilY: base + h * 0.9,
+    soilRadius: r * 0.9,
   };
 }
 

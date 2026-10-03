@@ -1,13 +1,7 @@
 import * as THREE from 'three';
 import type { AjisaiBuild } from '../plant/ajisai';
+import { createRoom, MARUMADO, PLANT_SPOT } from './room';
 import { celestialAt, skyAt } from './sky';
-
-/** Window opening, in metres. The sill top is y = 0, the wall plane is z = 0. */
-const WIN_W = 1.5;
-const WIN_H = 0.9;
-const FRAME = 0.06;
-const DEPTH = 0.16;
-const PLANT_SPOT = new THREE.Vector3(0.16, 0, 0.07);
 
 export interface WindowScene {
   scene: THREE.Scene;
@@ -62,36 +56,6 @@ function pagodaGeometry() {
   }
   rect(-0.015, y, 0.015, y + 0.5); // sōrin spire
   return new THREE.ShapeGeometry(shapes);
-}
-
-function shojiTexture() {
-  const w = 256;
-  const h = 512;
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#f4eee2';
-  ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = '#7b5b41';
-  ctx.lineWidth = 5;
-  for (let i = 1; i < 3; i++) {
-    ctx.beginPath();
-    ctx.moveTo((w * i) / 3, 0);
-    ctx.lineTo((w * i) / 3, h);
-    ctx.stroke();
-  }
-  for (let j = 1; j < 6; j++) {
-    ctx.beginPath();
-    ctx.moveTo(0, (h * j) / 6);
-    ctx.lineTo(w, (h * j) / 6);
-    ctx.stroke();
-  }
-  ctx.lineWidth = 14;
-  ctx.strokeRect(0, 0, w, h);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
 }
 
 export function createWindowScene(): WindowScene {
@@ -154,41 +118,9 @@ export function createWindowScene(): WindowScene {
   scene.add(pagoda);
 
   // --- Room ------------------------------------------------------------------------------
-  const wallShape = new THREE.Shape();
-  wallShape.moveTo(-5, -3);
-  wallShape.lineTo(5, -3);
-  wallShape.lineTo(5, 4);
-  wallShape.lineTo(-5, 4);
-  const hole = new THREE.Path();
-  hole.moveTo(-WIN_W / 2, 0);
-  hole.lineTo(-WIN_W / 2, WIN_H);
-  hole.lineTo(WIN_W / 2, WIN_H);
-  hole.lineTo(WIN_W / 2, 0);
-  wallShape.holes.push(hole);
-  const wall = new THREE.Mesh(new THREE.ShapeGeometry(wallShape), new THREE.MeshLambertMaterial({ color: '#f1e8d8' }));
-  scene.add(wall);
-
-  const wood = new THREE.MeshLambertMaterial({ color: '#7d5a3f' });
-  const box = (w: number, h: number, d: number, x: number, y: number, z: number, m: THREE.Material = wood) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
-    mesh.position.set(x, y, z);
-    scene.add(mesh);
-    return mesh;
-  };
-  // Frame: posts, lintel, and a deeper sill the plant sits on.
-  box(FRAME, WIN_H + FRAME, DEPTH, -WIN_W / 2 - FRAME / 2 + 0.001, WIN_H / 2, -DEPTH / 2 + 0.01);
-  box(FRAME, WIN_H + FRAME, DEPTH, WIN_W / 2 + FRAME / 2 - 0.001, WIN_H / 2, -DEPTH / 2 + 0.01);
-  box(WIN_W + FRAME * 2, FRAME, DEPTH, 0, WIN_H + FRAME / 2, -DEPTH / 2 + 0.01);
-  box(WIN_W + 0.34, 0.05, 0.4, 0, -0.025, 0.06, new THREE.MeshLambertMaterial({ color: '#9c7552' }));
-
-  // Shōji panels slid to the sides.
-  const shojiMat = new THREE.MeshLambertMaterial({ map: shojiTexture(), side: THREE.DoubleSide, emissive: '#000000' });
-  const shojiW = WIN_W * 0.17;
-  for (const side of [-1, 1]) {
-    const panel = new THREE.Mesh(new THREE.PlaneGeometry(shojiW, WIN_H), shojiMat);
-    panel.position.set(side * (WIN_W / 2 - shojiW / 2), WIN_H / 2, -DEPTH + 0.03);
-    scene.add(panel);
-  }
+  const room = createRoom();
+  scene.add(room.group);
+  const shojiMat = room.shoji;
 
   // --- Lights ----------------------------------------------------------------------------
   const ambient = new THREE.HemisphereLight('#e4eeff', '#8a6f55', 1.4);
@@ -211,12 +143,14 @@ export function createWindowScene(): WindowScene {
     const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const plantTop = plant ? plant.height : 0.2;
     // Half the visible height at the wall plane: hug the plant, never tighter than the sill.
-    let halfH = Math.max(0.36, plantTop * 0.72 + 0.12); // leave sky above the plant
-    // Narrow (portrait) screens: keep at least the plant and a bit of window in view.
-    halfH = Math.max(halfH, 0.42 / camera.aspect);
+    // Always show the whole round window; zoom out further only if the plant outgrows it.
+    // Frame the room like the reference: beam on top, cabinet at the bottom.
+    let halfH = Math.max(0.7, (plantTop + 0.45) / 2);
+    // Narrow (portrait) screens: keep the window's width in view too.
+    halfH = Math.max(halfH, (MARUMADO.r + 0.12) / camera.aspect);
     const dist = halfH / tan;
-    target.set(0.04, halfH - 0.09, 0);
-    camera.position.set(target.x, target.y + dist * 0.1, dist);
+    target.set(MARUMADO.x - 0.06, halfH - 0.3, 0);
+    camera.position.set(target.x, target.y + dist * 0.12, dist);
     camera.lookAt(target);
     camera.updateProjectionMatrix();
   }
