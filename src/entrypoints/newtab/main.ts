@@ -53,17 +53,44 @@ function resize() {
 }
 addEventListener('resize', resize);
 
-function loop() {
+let lastFrame = performance.now();
+function loop(now: number) {
   requestAnimationFrame(loop);
+  const dt = Math.min(0.1, (now - lastFrame) / 1000);
+  lastFrame = now;
+  // Animations (health easing, answer feedback) keep frames coming only while they run.
+  if (stepHealth(dt)) needsRender = true;
+  if (view.update(dt)) needsRender = true;
   if (!needsRender) return;
   gl.render(view.scene, view.camera);
   needsRender = false;
 }
 
-let plantKey = '';
+const reduceMotion = () => !!settings?.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+const targetHealth = () => preview.health ?? state?.health ?? 1;
+
+/** Health on screen eases toward the real value, so an answer visibly perks the plant up (or down). */
+let shownHealth: number | null = null;
+const HEALTH_EASE_S = 0.35;
+
 function updatePlant() {
+  if (shownHealth === null || preview.health !== null || reduceMotion()) shownHealth = targetHealth();
+  buildPlant();
+}
+
+function stepHealth(dt: number): boolean {
+  const target = targetHealth();
+  if (shownHealth === null || shownHealth === target) return false;
+  const next = target + (shownHealth - target) * Math.exp(-dt / HEALTH_EASE_S);
+  shownHealth = Math.abs(next - target) < 0.004 ? target : next;
+  buildPlant();
+  return true;
+}
+
+let plantKey = '';
+function buildPlant() {
   const days = preview.days ?? state?.plantDays ?? 0;
-  const health = preview.health ?? state?.health ?? 1;
+  const health = shownHealth ?? targetHealth();
   const key = `${days.toFixed(1)}|${health.toFixed(2)}`;
   if (key === plantKey) return;
   plantKey = key;
@@ -235,6 +262,8 @@ async function answer(habitId: string, kind: Answer) {
     return;
   }
 
+  if (kind === 'yes' && counts && !reduceMotion()) view.cheer(habitId === 'water' ? 'water' : 'sparkle');
+
   const name = catalogHabit(habitId)!.name.toLowerCase();
   if (kind === 'later') toast('Okay, I’ll ask again in 30 minutes.');
   else if (!counts) toast('Noted. That one already counted recently.');
@@ -347,6 +376,10 @@ function mountDevControls() {
     updatePlant();
     tick();
   });
+  const cheerWater = el('button', { type: 'button' }, 'Cheer: water');
+  cheerWater.addEventListener('click', () => view.cheer('water'));
+  const cheerSparkle = el('button', { type: 'button' }, 'Cheer: sparkle');
+  cheerSparkle.addEventListener('click', () => view.cheer('sparkle'));
   const reset = el('button', { type: 'button' }, 'Erase all data');
   reset.addEventListener('click', () => {
     if (confirm('Dev: erase settings and history?')) void clearAll();
@@ -370,6 +403,7 @@ function mountDevControls() {
     el('label', {}, 'Plant age ', days),
     el('label', {}, 'Health', health),
     el('div', { className: 'row' }, real, reset),
+    el('div', { className: 'row' }, cheerWater, cheerSparkle),
     el('label', {}, 'Simulate history'),
     el('div', { className: 'row' }, sim('30 d healthy (fresh)', 30, 'healthy', true), sim('+7 d neglect', 7, 'neglect'), sim('+7 d healthy', 7, 'healthy'), sim('+30 d mixed', 30, 'mixed')),
   );

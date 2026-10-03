@@ -51,7 +51,38 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Focus / modals | 🟡 | Background made `inert` while onboarding/settings are open |
 | Settings edge input | ✅ | Start = end, no workdays, min 1 habit validated |
 
+### P2
+
+| Risk | Status | Notes |
+|---|---|---|
+| Plant name with kanji / emoji, long names | ⬜ | Latin-only font falls back to system; needs ellipsis truncation |
+| Event log growth over years | ⬜ | Compact days older than 90 into daily summaries (not urgent: ~0.7 MB/year) |
+| Vacation mode left on forever | ⬜ | Gentle reminder after 14 days |
+| Very old plants | 🟡 | Leaves/florets capped; garden graduation is post-MVP |
+| Browser zoom 50–200 %, narrow windows | ⬜ | Responsive pass + screenshots |
+| `three` bundle parse time | ⬜ | Measure cold open (`performance.mark`); budget < 300 ms to first paint |
+
+## Missing pieces (plan §6)
+
+| Item | Status | Notes |
+|---|---|---|
+| "Yes" feedback animation on the plant | ✅ | Water: droplets fall into the pot; other habits: golden glints rise; plant sways; health eases instead of jumping (also on "Not yet"). Off with reduce motion |
+| Local error log in the export | ⬜ | Lets testers send crashes voluntarily (no telemetry) |
+| Rename + start over in Settings | ✅ | |
+| Beta channel (unlisted store) | ⏸️ | Store postponed |
+| Minimum Chrome version | ⬜ | Declare in manifest (WebGL2 + ES2022) |
+
+## Post-MVP
+
+| Item | Status |
+|---|---|
+| Garden graduation at 6–12 months, and what comes next | ⬜ |
+| Holidays / days off beyond weekends | ⬜ |
+| Mood check (scale) and caffeine (inverted) habits | ⬜ |
+
 ## Log
+
+- 2026-10-03: answer feedback animation; tracker now lists P2, missing pieces and post-MVP.
 
 - 2026-10-03: "How Marumado works" modal (help button next to Settings) with a looping explainer video rendered from the lab (`npm run render:explainer`); fixed `npm run lab` dev server (script path outside Vite root); lab compare view keeps fixed slots while wilting. E2E: 9/10 pass, 1 fixme.
 

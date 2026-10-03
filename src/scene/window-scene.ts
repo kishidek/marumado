@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { AjisaiBuild } from '../plant/ajisai';
+import { createFeedback, type Cheer } from './feedback';
 import { createRoom, MARUMADO, PLANT_SPOT } from './room';
 import { celestialAt, skyAt } from './sky';
 
@@ -10,6 +11,10 @@ export interface WindowScene {
   /** `days` = days of care; drives the framing so the camera pulls back as the plant grows. */
   setPlant(build: AjisaiBuild, days: number): void;
   resize(width: number, height: number): void;
+  /** Plays a short reaction on the plant (see feedback.ts). */
+  cheer(kind: Cheer): void;
+  /** Advances animations by `dt` seconds; true while the scene needs another frame. */
+  update(dt: number): boolean;
 }
 
 /** Smooth 1D value noise from a few sines: cheap, deterministic, good enough for ridgelines. */
@@ -138,6 +143,7 @@ export function createWindowScene(): WindowScene {
 
   let plant: AjisaiBuild | null = null;
   let growthDays = 0;
+  const feedback = createFeedback(scene);
   let size = { w: 1, h: 1 };
 
   /** Close-up on the sprout at first; the full room once the plant is ~8 months of care. */
@@ -199,6 +205,12 @@ export function createWindowScene(): WindowScene {
       build.group.position.copy(PLANT_SPOT);
       scene.add(build.group);
       frame();
+    },
+    cheer(kind) {
+      feedback.play(kind, () => (plant ? { group: plant.group, height: plant.height, potRadius: plant.potRadius } : null));
+    },
+    update(dt) {
+      return feedback.update(dt);
     },
     resize(width, height) {
       size = { w: width, h: height };
