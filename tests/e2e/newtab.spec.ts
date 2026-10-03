@@ -155,3 +155,23 @@ test('help modal explains the app and plays the looping explainer video', async 
   await page.click('#ask .btn.primary'); // background is interactive again
   await expect.poll(() => storedEvents(page)).toBe(1);
 });
+
+test('vacation left on for 15 days gets a gentle reminder', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page, { vacations: [{ from: Date.now() - 15 * 86_400_000, to: null }] });
+  await page.reload();
+  await expect(page.locator('#toast')).toContainText('vacation mode', { timeout: 10_000 });
+});
+
+test('cold open: report time to first 3D frame', async ({ context }) => {
+  const first = await newTab(context);
+  await seed(first);
+  const times: number[] = [];
+  for (let i = 0; i < 5; i++) {
+    const p = await newTab(context);
+    await p.waitForFunction(() => performance.getEntriesByName('marumado:first-frame').length > 0);
+    times.push(await p.evaluate(() => Math.round(performance.getEntriesByName('marumado:first-frame')[0]!.startTime)));
+    await p.close();
+  }
+  console.log(`first 3D frame (ms, software GL): ${times.join(', ')}`);
+});

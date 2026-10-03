@@ -17,7 +17,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | 6 | Backup | ✅ | Export, validated restore, pre-restore snapshot, backup reminder; E2E round-trip + corrupt file |
 | 7 | QA matrix | ✅ | Playwright suite in repo (`npm run test:e2e`): 10/10 |
 | 8 | Store | ⏸️ | Postponed (private use, unpacked) |
-| 9 | Deck videos | ⬜ | Simulator ready |
+| 9 | Deck videos | ✅ | `npm run render:deck` → `deck-videos/` (1080p H.264, 8 s each: growth 30 d, neglect, recovery). Not committed (large) |
 
 ## Risks
 
@@ -48,19 +48,19 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | First paint flash | ✅ | boot.ts background by hour + canvas fade-in |
 | Slow machines | 🟡 | DPR cap, no shadows, render on demand; no light mode |
 | Touch devices | ✅ | E2E with `hasTouch` |
-| Focus / modals | 🟡 | Background made `inert` while onboarding/settings are open |
+| Focus / modals | ✅ | Background `inert` while onboarding/settings/help are open; focus moves into each dialog |
 | Settings edge input | ✅ | Start = end, no workdays, min 1 habit validated |
 
 ### P2
 
 | Risk | Status | Notes |
 |---|---|---|
-| Plant name with kanji / emoji, long names | ⬜ | Latin-only font falls back to system; needs ellipsis truncation |
+| Plant name with kanji / emoji, long names | ✅ | System font fallback; ellipsis after 14ch |
 | Event log growth over years | ⬜ | Compact days older than 90 into daily summaries (not urgent: ~0.7 MB/year) |
-| Vacation mode left on forever | ⬜ | Gentle reminder after 14 days |
+| Vacation mode left on forever | ✅ | Toast once a day after 14 days (E2E) |
 | Very old plants | 🟡 | Leaves/florets capped; garden graduation is post-MVP |
 | Browser zoom 50–200 %, narrow windows | ⬜ | Responsive pass + screenshots |
-| `three` bundle parse time | ⬜ | Measure cold open (`performance.mark`); budget < 300 ms to first paint |
+| `three` bundle parse time | ✅ | `marumado:first-frame` mark. Apple M1 (Metal): 77–120 ms typical, ~1.3 s for the first tab of a browser session (process + shader warm-up). Software GL: 0.9–2.9 s |
 
 ## Missing pieces (plan §6)
 
@@ -81,6 +81,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-03: deck videos rendered; name ellipsis; vacation nudge; reminders now marked only once shown (bug); first-frame timing measured.
 
 - 2026-10-03: >16 tabs: headless reports all tabs visible, so E2E now covers loss → CSS window → recovery (10/10 E2E).
 

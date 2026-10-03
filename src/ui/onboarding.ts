@@ -156,4 +156,5 @@ export function openOnboarding(onDone: (s: Settings) => void) {
   $('onboarding').hidden = false;
   setBackgroundInert(true);
   render();
+  next.focus(); // Chrome may keep focus in the address bar; this helps once the page has it
 }

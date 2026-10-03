@@ -10,6 +10,7 @@ export const settingsItem = storage.defineItem<Settings | null>('local:settings'
 export const eventsItem = storage.defineItem<AnswerEvent[]>('local:events', { fallback: [], version: 1 });
 /** UI memory that isn't plant data (e.g. the last day we nagged about backups). */
 export const backupReminderItem = storage.defineItem<string | null>('local:ui:backupReminderDay', { fallback: null });
+export const vacationReminderItem = storage.defineItem<string | null>('local:ui:vacationReminderDay', { fallback: null });
 const previousItem = storage.defineItem<unknown>('local:backup:previous', { fallback: null });
 
 const LOCK = 'marumado-write';

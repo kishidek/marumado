@@ -8,7 +8,7 @@ import { skyAt } from '../../scene/sky';
 import { createGlHost } from '../../scene/gl-host';
 import { createWindowScene } from '../../scene/window-scene';
 import { shiftBack, simulateDays, type Pattern } from '../../engine/simulate';
-import { appendEvent, backupReminderItem, clearAll, eventsItem, plant, replaceAll, settingsItem, watchAll } from '../../storage/items';
+import { appendEvent, backupReminderItem, vacationReminderItem, clearAll, eventsItem, plant, replaceAll, settingsItem, watchAll } from '../../storage/items';
 import { $, el, icon, ordinal, setBackgroundInert, toast } from '../../ui/dom';
 import { initHelp } from '../../ui/help';
 import { habitIcon } from '../../ui/icons';
@@ -54,8 +54,11 @@ function resize() {
 addEventListener('resize', resize);
 
 let lastFrame = performance.now();
+/** Dev-only: when a render script drives frames itself (scripts/render-deck.mjs). */
+let manualClock = false;
 function loop(now: number) {
   requestAnimationFrame(loop);
+  if (manualClock) return;
   const dt = Math.min(0.1, (now - lastFrame) / 1000);
   lastFrame = now;
   // Animations (health easing, answer feedback) keep frames coming only while they run.
@@ -63,6 +66,10 @@ function loop(now: number) {
   if (view.update(dt)) needsRender = true;
   if (!needsRender) return;
   gl.render(view.scene, view.camera);
+  if (gl.state === 'ready' && !performance.getEntriesByName('marumado:first-frame').length) {
+    performance.mark('marumado:first-frame'); // cold-open budget: < 300 ms on a real GPU
+    if (DEV) console.info(`[marumado] first 3D frame at ${Math.round(performance.now())} ms`);
+  }
   needsRender = false;
 }
 
@@ -326,6 +333,20 @@ function render() {
   renderCard(now);
   tick();
   void maybeRemindBackup(now);
+  void maybeRemindVacation(now);
+}
+
+/** Vacation mode left on for weeks silently freezes the game: nudge once a day after 14 days. */
+const VACATION_NUDGE_AFTER_DAYS = 14;
+async function maybeRemindVacation(now: number) {
+  const open = settings!.vacations.find((v) => v.to === null);
+  if (!open || now - open.from < VACATION_NUDGE_AFTER_DAYS * 86_400_000 || document.visibilityState !== 'visible') return;
+  const today = new Date(now).toDateString();
+  if ((await vacationReminderItem.getValue()) === today) return;
+  setTimeout(() => {
+    toast(`${settings!.plantName} is still on vacation mode. Back at work? Turn it off in Settings.`);
+    void vacationReminderItem.setValue(today);
+  }, 4500);
 }
 
 /** Data lives only in this browser: nudge (at most once a day) when a backup is overdue. */
@@ -337,8 +358,11 @@ async function maybeRemindBackup(now: number) {
   if (!overdue || document.visibilityState !== 'visible') return;
   const today = new Date(now).toDateString();
   if ((await backupReminderItem.getValue()) === today) return;
-  await backupReminderItem.setValue(today);
-  setTimeout(() => toast(`It’s been a while since you backed up ${s.plantName}. Settings → Export backup.`), 1500);
+  // Remember it only once it has actually been shown (the tab may close before the delay).
+  setTimeout(() => {
+    toast(`It’s been a while since you backed up ${s.plantName}. Settings → Export backup.`);
+    void backupReminderItem.setValue(today);
+  }, 1500);
 }
 
 // --- Dev-only review controls ------------------------------------------------------------
@@ -407,6 +431,29 @@ function mountDevControls() {
     el('label', {}, 'Simulate history'),
     el('div', { className: 'row' }, sim('30 d healthy (fresh)', 30, 'healthy', true), sim('+7 d neglect', 7, 'neglect'), sim('+7 d healthy', 7, 'healthy'), sim('+30 d mixed', 30, 'mixed')),
   );
+}
+
+// Dev-only hook for frame-exact video renders (deck). Not present in production builds.
+if (DEV) {
+  Object.assign(window, {
+    __marumado: {
+      manual(on: boolean) {
+        manualClock = on;
+      },
+      set(p: { days?: number; health?: number; hour?: number }) {
+        if (p.days !== undefined) preview.days = p.days;
+        if (p.health !== undefined) preview.health = p.health;
+        if (p.hour !== undefined) preview.hour = p.hour;
+        updatePlant();
+        tick();
+      },
+      cheer: (kind: 'water' | 'sparkle') => view.cheer(kind),
+      frame(dt: number) {
+        view.update(dt);
+        gl.render(view.scene, view.camera);
+      },
+    },
+  });
 }
 
 // --- Boot --------------------------------------------------------------------------------

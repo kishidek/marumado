@@ -32,3 +32,6 @@ npm-debug.log*
 
 # The global "Icon" rule (macOS Icon\r files) also matches this folder on case-insensitive disks.
 !/public/icon/
+
+# Rendered deck videos (large; regenerate with npm run render:deck)
+deck-videos/

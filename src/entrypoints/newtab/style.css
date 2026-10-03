@@ -826,3 +826,13 @@ select option {
     transition: none !important;
   }
 }
+
+/* Long or wide (kanji/emoji) plant names never break the layout. */
+#plantName {
+  display: inline-block;
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
