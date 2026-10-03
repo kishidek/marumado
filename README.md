@@ -4,7 +4,7 @@ A Chrome new-tab extension: an ajisai (紫陽花, hydrangea) on a Kyoto windowsi
 
 Each new tab may ask one quick question ("Did you drink water in the last 2 hours?"). Keep your habits and the plant grows, gets repotted and blooms; skip them and it droops, but it never dies. The sky outside the round window follows your local time.
 
-> **Status:** early but working: onboarding, questions, growth/health engine, settings, backup/restore. Not yet: WebGL resilience for many open tabs, store packaging. See [docs/plan-wxt.md](docs/plan-wxt.md).
+> **Status:** MVP complete and in private use (installed unpacked). Not on the Chrome Web Store. Progress: [tracker](docs/tracker.md) · design: [plan](docs/plan-wxt.md) · fixed bugs: [bug log](docs/bugs.md).
 
 ## Privacy
 
@@ -56,7 +56,7 @@ src/
   lab/                  plant lab code
 lab/                    plant lab page + its Vite config
 public/icon/            extension icons (source: assets/icon.svg)
-docs/                   plan, decisions and risk register
+docs/                   plan, tracker, bug log
 ```
 
 ## License
