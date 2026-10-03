@@ -7,5 +7,5 @@
     // re-enable (and fix) before writing src/engine (plan, phase 2).
     "noUncheckedIndexedAccess": false
   },
-  "include": ["src", "lab", ".wxt/wxt.d.ts"]
+  "include": ["src", "lab", "tests", ".wxt/wxt.d.ts"]
 }

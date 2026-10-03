@@ -19,6 +19,14 @@ npm run build
 
 Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and select `.output/chrome-mv3`. Open a new tab.
 
+## FAQ
+
+- **My new tab still shows another extension.** Only one extension can replace the new tab. Disable the other one (Momentum, etc.) in `chrome://extensions`.
+- **Chrome asks "Change back to Google?"** That's Chrome checking you meant to install a new-tab extension. Choose *Keep it*.
+- **No plant in Incognito.** Chrome doesn't let extensions replace the Incognito new tab.
+- **No questions right now.** Questions only appear during your work hours and workdays (Settings → Work hours), and never on vacation.
+- **I see a flat round window instead of the 3D room.** WebGL is off in this browser (hardware acceleration disabled or blocked by policy). Everything else still works.
+
 ## Develop
 
 | Command | What it does |
@@ -28,6 +36,7 @@ Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpack
 | `npm run zip` | Zip for distribution |
 | `npm run compile` | Type-check |
 | `npm test` | Engine tests (`npm run test:tz` runs them in 3 time zones) |
+| `npm run test:e2e` | Builds, then runs Playwright against the real unpacked extension |
 | `npm run lab` | Plant lab (plain Vite page, not shipped): tune the ajisai's growth × health |
 
 In dev mode (`npm run dev`) the new tab shows **Dev controls** (sky hour, plant age/health preview, erase data) and accepts `?hour=22&day=180&health=0.4`. Production builds strip them.

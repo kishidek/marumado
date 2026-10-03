@@ -8,6 +8,11 @@
   </head>
   <body>
     <div id="scene" aria-hidden="true"></div>
+    <!-- Shown only when WebGL is unavailable: a CSS version of the round window. -->
+    <div id="fallback" hidden>
+      <div class="fb-window"><div class="fb-ridge"></div></div>
+      <p id="fallbackNote">3D is turned off in this browser. Your plant is fine; everything else works.</p>
+    </div>
 
     <main class="ui">
       <header class="clock">
@@ -57,6 +62,7 @@
       <div id="mockBody"></div>
     </details>
 
+    <script type="module" src="./boot.ts"></script>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

@@ -32,3 +32,9 @@ export function relativeTime(ms: number) {
 }
 
 export const ordinal = (n: number) => ['1st', '2nd', '3rd'][n - 1] ?? `${n}th`;
+
+/** While a modal surface is open, everything behind it is inert (no focus, no clicks). */
+export function setBackgroundInert(on: boolean) {
+  for (const id of ['scene', 'fallback']) document.getElementById(id)?.toggleAttribute('inert', on);
+  document.querySelector('main.ui')?.toggleAttribute('inert', on);
+}

@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { Settings as SettingsIcon, Sprout } from 'lucide';
 import { catalogHabit, DAILY } from '../../engine/catalog';
 import { computeState, potNumber, type PlantState } from '../../engine/model';
@@ -6,12 +5,14 @@ import { availability, duePrompts, minutesUntilDue, wouldCount, type Availabilit
 import type { Answer, AnswerEvent, HabitSetting, Settings } from '../../engine/types';
 import { buildAjisai } from '../../plant/ajisai';
 import { skyAt } from '../../scene/sky';
+import { createGlHost } from '../../scene/gl-host';
 import { createWindowScene } from '../../scene/window-scene';
-import { appendEvent, clearAll, eventsItem, plant, settingsItem, watchAll } from '../../storage/items';
-import { $, el, icon, ordinal, toast } from '../../ui/dom';
+import { shiftBack, simulateDays, type Pattern } from '../../engine/simulate';
+import { appendEvent, backupReminderItem, clearAll, eventsItem, plant, replaceAll, settingsItem, watchAll } from '../../storage/items';
+import { $, el, icon, ordinal, setBackgroundInert, toast } from '../../ui/dom';
 import { habitIcon } from '../../ui/icons';
 import { openOnboarding } from '../../ui/onboarding';
-import { initSettings, openSettings } from '../../ui/settings';
+import { initSettings, openSettings, settingsOpen } from '../../ui/settings';
 import './style.css';
 
 const DEV = import.meta.env.DEV;
@@ -30,16 +31,22 @@ let state: PlantState | null = null;
 let loaded = false;
 
 // --- 3D window scene ---------------------------------------------------------------------
-const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: params.has('capture') });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
-$('scene').appendChild(renderer.domElement);
-const view = createWindowScene();
-
 let needsRender = true;
 const requestRender = () => (needsRender = true);
 
+const view = createWindowScene();
+const gl = createGlHost($('scene'), {
+  capture: params.has('capture'),
+  onChange: (state) => {
+    // No WebGL (GPU off, policy, privacy extensions) or context taken away: CSS window, UI still works.
+    $('fallback').hidden = state !== 'unsupported' && state !== 'lost';
+    $('fallbackNote').hidden = state !== 'unsupported';
+    requestRender();
+  },
+});
+
 function resize() {
-  renderer.setSize(innerWidth, innerHeight);
+  gl.resize(innerWidth, innerHeight);
   view.resize(innerWidth, innerHeight);
   requestRender();
 }
@@ -48,7 +55,7 @@ addEventListener('resize', resize);
 function loop() {
   requestAnimationFrame(loop);
   if (!needsRender) return;
-  renderer.render(view.scene, view.camera);
+  gl.render(view.scene, view.camera);
   needsRender = false;
 }
 
@@ -87,6 +94,11 @@ function tick() {
   $('date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   $('greeting').textContent = greeting(h, settings ? availability(settings, Date.now()) : null);
   view.setHour(h);
+  const sky = skyAt(h);
+  const fb = $('fallback').style;
+  fb.setProperty('--sky-top', `#${sky.top.getHexString()}`);
+  fb.setProperty('--sky-bottom', `#${sky.bottom.getHexString()}`);
+  fb.setProperty('--ridge', `#${sky.ink.clone().lerp(sky.haze, 0.45).getHexString()}`);
   document.documentElement.dataset.sky = skyAt(h).lamp > 0.55 ? 'night' : 'day';
   requestRender();
 }
@@ -269,7 +281,11 @@ function render() {
     return;
   }
 
-  $('onboarding').hidden = true;
+  if (!$('onboarding').hidden) {
+    // Planted from another tab (or restored) while this one was onboarding: close it and unlock the page.
+    $('onboarding').hidden = true;
+    setBackgroundInert(settingsOpen());
+  }
   $('needs').hidden = false;
   $('openSettings').hidden = false;
   state = computeState(settings, events, now);
@@ -277,6 +293,20 @@ function render() {
   renderNeeds(now);
   renderCard(now);
   tick();
+  void maybeRemindBackup(now);
+}
+
+/** Data lives only in this browser: nudge (at most once a day) when a backup is overdue. */
+const BACKUP_FIRST_AFTER_DAYS = 14;
+const BACKUP_EVERY_DAYS = 30;
+async function maybeRemindBackup(now: number) {
+  const s = settings!;
+  const overdue = s.lastExportAt === null ? state!.calendarDay >= BACKUP_FIRST_AFTER_DAYS : now - s.lastExportAt > BACKUP_EVERY_DAYS * 86_400_000;
+  if (!overdue || document.visibilityState !== 'visible') return;
+  const today = new Date(now).toDateString();
+  if ((await backupReminderItem.getValue()) === today) return;
+  await backupReminderItem.setValue(today);
+  setTimeout(() => toast(`It’s been a while since you backed up ${s.plantName}. Settings → Export backup.`), 1500);
 }
 
 // --- Dev-only review controls ------------------------------------------------------------
@@ -318,11 +348,27 @@ function mountDevControls() {
   reset.addEventListener('click', () => {
     if (confirm('Dev: erase settings and history?')) void clearAll();
   });
+  // Time travel: push the history into the past and fill the gap with simulated answers.
+  const sim = (label: string, nDays: number, pattern: Pattern, fresh = false) => {
+    const b = el('button', { type: 'button' }, label);
+    b.addEventListener('click', async () => {
+      if (!settings) return;
+      const now = Date.now();
+      let st = { settings, events };
+      if (fresh) st = { settings: { ...settings, createdAt: now - nDays * 86_400_000 }, events: [] };
+      else st = shiftBack(st.settings, st.events, nDays);
+      await replaceAll(st.settings, [...st.events, ...simulateDays(st.settings, now, nDays, pattern, now % 1000)]);
+      toast(`Simulated ${nDays} days (${pattern}).`);
+    });
+    return b;
+  };
   $('mockBody').replaceChildren(
     el('label', {}, 'Sky hour', hour),
     el('label', {}, 'Plant age ', days),
     el('label', {}, 'Health', health),
     el('div', { className: 'row' }, real, reset),
+    el('label', {}, 'Simulate history'),
+    el('div', { className: 'row' }, sim('30 d healthy (fresh)', 30, 'healthy', true), sim('+7 d neglect', 7, 'neglect'), sim('+7 d healthy', 7, 'healthy'), sim('+30 d mixed', 30, 'mixed')),
   );
 }
 

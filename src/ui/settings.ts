@@ -3,7 +3,7 @@ import { makeBackup, parseBackup } from '../engine/backup';
 import { CATALOG, catalogHabit, INTERVAL_OPTIONS, intervalLabel, MAX_HABITS, MIN_HABITS } from '../engine/catalog';
 import type { AnswerEvent, Settings } from '../engine/types';
 import { clearAll, replaceAll, saveSettings } from '../storage/items';
-import { $, el, icon, relativeTime, toast } from './dom';
+import { $, el, icon, relativeTime, setBackgroundInert, toast } from './dom';
 import { habitIcon } from './icons';
 import { daysPicker, hoursPicker } from './pickers';
 
@@ -29,6 +29,7 @@ export function openSettings(open: boolean) {
   if (open) render();
   $('settings').hidden = !open;
   $('settingsScrim').hidden = !open;
+  setBackgroundInert(open || !$('onboarding').hidden); // onboarding may have opened underneath (start over)
   if (open) $('settings').querySelector<HTMLElement>('[data-close]')!.focus();
 }
 

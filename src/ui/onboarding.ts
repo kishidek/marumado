@@ -1,7 +1,7 @@
 import { ShieldCheck, Sprout } from 'lucide';
 import { CATALOG, DEFAULT_HABITS, intervalLabel, MAX_HABITS } from '../engine/catalog';
 import type { Settings, WorkHours } from '../engine/types';
-import { $, el, icon } from './dom';
+import { $, el, icon, setBackgroundInert } from './dom';
 import { habitIcon } from './icons';
 import { daysPicker, hoursPicker } from './pickers';
 
@@ -137,6 +137,7 @@ export function openOnboarding(onDone: (s: Settings) => void) {
       return;
     }
     $('onboarding').hidden = true;
+    setBackgroundInert(false);
     onDone({
       plantName: name,
       habits: CATALOG.filter((h) => selected.has(h.id)).map((h) => ({ id: h.id, intervalMin: h.defaultIntervalMin })),
@@ -153,5 +154,6 @@ export function openOnboarding(onDone: (s: Settings) => void) {
   };
 
   $('onboarding').hidden = false;
+  setBackgroundInert(true);
   render();
 }

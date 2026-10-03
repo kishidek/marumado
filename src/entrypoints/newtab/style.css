@@ -54,9 +54,49 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: #1c2850;
+  /* Plaster tone until the scene's first frame (boot.ts darkens it at night). */
+  background: var(--boot-bg, #e3d7c1);
   color: var(--ink);
   font: 14px/1.45 var(--sans);
+}
+
+#scene canvas {
+  animation: scene-in 0.25s ease-out;
+}
+
+@keyframes scene-in {
+  from {
+    opacity: 0;
+  }
+}
+
+#fallback {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  background: #e3d7c1;
+  color: #6f665b;
+  font-size: 13px;
+}
+
+.fb-window {
+  position: relative;
+  width: min(54vh, 70vw);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 8px solid #cdbfa6;
+  border-radius: 50%;
+  background: linear-gradient(var(--sky-top, #6aa6e0), var(--sky-bottom, #d6ebf6) 70%);
+}
+
+.fb-ridge {
+  position: absolute;
+  inset: 55% 0 0;
+  background: var(--ridge, #6c7f8f);
+  clip-path: polygon(0 40%, 18% 10%, 34% 35%, 52% 0, 70% 30%, 86% 12%, 100% 28%, 100% 100%, 0 100%);
 }
 
 #scene,

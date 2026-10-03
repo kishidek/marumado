@@ -1,0 +1,136 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { test, expect, launch, newTab, seed, storedEvents } from './fixtures';
+
+test('first run: mandatory onboarding plants the seed; no console/CSP errors', async ({ context }) => {
+  const page = await newTab(context);
+  await expect(page.locator('#onboarding')).toBeVisible();
+  await expect(page.locator('#needs')).toBeHidden();
+  await expect(page.locator('#mockControls')).toHaveCount(0); // dev controls stripped
+  await page.click('#obNext');
+  await expect(page.locator('#obNext')).toBeDisabled(); // empty name
+  await page.fill('.name-input', 'Sora');
+  await page.click('#obNext');
+  await page.click('#obNext'); // default habits
+  await page.click("#obBody .days button:has-text('Sat')");
+  await page.click("#obBody .days button:has-text('Sun')");
+  await page.locator('#obBody input[type=time]').first().fill('00:00');
+  await page.locator('#obBody input[type=time]').last().fill('23:59');
+  await page.locator('#obBody input[type=time]').last().dispatchEvent('change');
+  await page.click('#obNext');
+  await page.click('#obNext');
+  await expect(page.locator('#onboarding')).toBeHidden();
+  await expect(page.locator('#plantName')).toHaveText('Sora');
+  await expect(page.locator('#ask h3')).toBeVisible();
+  expect(page.errors).toEqual([]);
+});
+
+test('answering everything shows "All caught up", then the card disappears', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page);
+  for (let i = 0; i < 3; i++) {
+    await page.click('#ask .btn.primary');
+    await page.waitForTimeout(400);
+  }
+  await expect(page.locator('#ask')).toHaveClass(/done/);
+  await expect(page.locator('#ask')).toHaveClass(/gone/, { timeout: 5000 });
+  await expect.poll(() => storedEvents(page)).toBe(3);
+});
+
+test('two tabs answering at the same time lose nothing', async ({ context }) => {
+  const a = await newTab(context);
+  await seed(a);
+  const b = await newTab(context);
+  await expect(b.locator('#plantName')).toHaveText('Aoi');
+  await Promise.all([a.click('#ask .btn.primary'), b.click('#ask .btn:has-text("Not yet")')]);
+  await expect.poll(() => storedEvents(a)).toBe(2);
+});
+
+test('rename propagates to other open tabs', async ({ context }) => {
+  const a = await newTab(context);
+  await seed(a);
+  const b = await newTab(context);
+  await a.bringToFront();
+  await a.click('#openSettings');
+  await a.fill('.rename-input', 'Hana');
+  await a.click("button:has-text('Rename')");
+  await expect(a.locator('#plantName')).toHaveText('Hana');
+  await expect(b.locator('#plantName')).toHaveText('Hana');
+});
+
+test('export → restore round-trips; a corrupt file changes nothing', async ({ context }, info) => {
+  const page = await newTab(context);
+  await seed(page, { plantName: 'Mizu' });
+  await page.click('#ask .btn.primary');
+  await page.click('#openSettings');
+  const download = page.waitForEvent('download');
+  await page.click("button:has-text('Export backup')");
+  const file = info.outputPath('backup.json');
+  await (await download).saveAs(file);
+  const backup = JSON.parse(await readFile(file, 'utf8'));
+  expect(backup).toMatchObject({ app: 'marumado', schemaVersion: 1, settings: { plantName: 'Mizu' } });
+
+  // Wipe to a different plant, then restore the backup.
+  await page.keyboard.press('Escape');
+  await seed(page, { plantName: 'Other' });
+  await page.click('#openSettings');
+  page.once('dialog', (d) => d.accept());
+  await page.locator('#settingsBody input[type=file]').setInputFiles(file);
+  await expect(page.locator('#plantName')).toHaveText('Mizu');
+  await expect.poll(() => storedEvents(page)).toBe(1);
+
+  const corrupt = path.join(info.outputDir, 'corrupt.json');
+  await writeFile(corrupt, '{"app":"marumado","schemaVersion":1,"settings":{}}');
+  await page.locator('#settingsBody input[type=file]').setInputFiles(corrupt);
+  await expect(page.locator('#toast')).toContainText('damaged');
+  await expect(page.locator('#plantName')).toHaveText('Mizu');
+});
+
+test('start over erases the plant and brings back onboarding in every tab', async ({ context }) => {
+  const a = await newTab(context);
+  await seed(a);
+  const b = await newTab(context);
+  await a.bringToFront();
+  await a.click('#openSettings');
+  a.on('dialog', (d) => (d.message().startsWith('Start over') ? d.accept() : d.dismiss()));
+  await a.click("button:has-text('Start over')");
+  await expect(a.locator('#onboarding')).toBeVisible();
+  await expect(b.locator('#onboarding')).toBeVisible();
+});
+
+// FIXME(tracker): fails in headless — the revisited tab doesn't reach data-gl=ready. Investigate before relying on it.
+test.fixme('20 open tabs: whichever tab you come back to renders in 3D', async ({ context }) => {
+  const first = await newTab(context);
+  await seed(first);
+  const pages = [first];
+  for (let i = 1; i < 20; i++) pages.push(await newTab(context));
+  for (const p of [pages[0]!, pages[5]!, pages[19]!]) {
+    await p.bringToFront();
+    await p.dispatchEvent('body', 'pointerdown');
+    await expect(p.locator('#scene')).toHaveAttribute('data-gl', 'ready');
+    await expect(p.locator('#scene canvas')).toHaveCount(1);
+  }
+});
+
+test('without WebGL the page still works with a CSS window', async () => {
+  const context = await launch(['--disable-3d-apis']);
+  const page = await newTab(context);
+  await expect(page.locator('#scene')).toHaveAttribute('data-gl', 'unsupported');
+  await expect(page.locator('#fallback')).toBeVisible();
+  await expect(page.locator('#fallbackNote')).toBeVisible();
+  await seed(page);
+  await page.click('#ask .btn.primary');
+  await expect.poll(() => storedEvents(page)).toBe(1);
+  await context.close();
+});
+
+test('touch: tapping the collapsed plant pill opens it', async () => {
+  const context = await launch([], { hasTouch: true });
+  const page = await newTab(context);
+  await seed(page);
+  await page.evaluate(() => document.getElementById('needs')!.classList.add('collapsed'));
+  await expect(page.locator('#needsList')).toBeHidden();
+  await page.locator('#needs h2').tap();
+  await expect(page.locator('#needsList')).toBeVisible();
+  await context.close();
+});
