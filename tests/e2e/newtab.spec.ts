@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import type { Page } from '@playwright/test';
 import { test, expect, launch, newTab, seed, storedEvents } from './fixtures';
 
 test('first run: mandatory onboarding plants the seed; no console/CSP errors', async ({ context }) => {
@@ -68,7 +69,7 @@ test('export → restore round-trips; a corrupt file changes nothing', async ({ 
   const file = info.outputPath('backup.json');
   await (await download).saveAs(file);
   const backup = JSON.parse(await readFile(file, 'utf8'));
-  expect(backup).toMatchObject({ app: 'marumado', schemaVersion: 1, settings: { plantName: 'Mizu' } });
+  expect(backup).toMatchObject({ app: 'marumado', schemaVersion: 2, settings: { plantName: 'Mizu' } });
 
   // Wipe to a different plant, then restore the backup.
   await page.keyboard.press('Escape');
@@ -248,7 +249,7 @@ test('old history is compacted into a checkpoint without changing the plant', as
   expect(Math.min(...left.map((e) => e.ts))).toBeGreaterThan(now - 92 * DAY);
 
   await page.reload(); // now computed from checkpoint + recent events
-  await expect(page.locator('#plantMeta')).toContainText(`Day ${expected.calendarDay}`);
+  // (Day N counts from the current generation; this history is long enough to have moved to the garden.)
   const widths = await page.locator('.meter i').evaluateAll((els) => els.map((e) => (e as HTMLElement).style.width));
   expect(widths).toEqual(expected.habits.map((h) => `${Math.round(h.health * 100)}%`));
 });
@@ -356,4 +357,85 @@ test('#14 changing workdays in Settings does not rewrite the plant’s past', as
   await page.reload();
   expect(await meters()).toEqual(before);
   expect(await page.evaluate(() => chrome.storage.local.get('checkpoint').then((r) => !!r.checkpoint))).toBe(true);
+});
+
+// --- Garden (plans/002-garden.md) ---------------------------------------------------------------
+
+/** Settings + 260 days of healthy answers: past the 6-months-of-care threshold. */
+async function seedSixMonths(page: Page, overrides: Record<string, unknown> = {}) {
+  const { simulateDays } = await import('../../src/engine/simulate');
+  const now = Date.now();
+  const s = {
+    plantName: 'Hana',
+    habits: [{ id: 'water', intervalMin: 120 }, { id: 'stretch', intervalMin: 60 }, { id: 'eyes', intervalMin: 30 }],
+    workHours: { start: '00:00', end: '23:59', days: [0, 1, 2, 3, 4, 5, 6] },
+    createdAt: now - 260 * 86_400_000,
+    vacations: [],
+    reduceMotion: false,
+    lastExportAt: now,
+    ...overrides,
+  };
+  await page.evaluate((data) => chrome.storage.local.set(data), { settings: s, events: simulateDays(s, now, 260, 'healthy', 9), garden: null });
+}
+type StoredGarden = { moved: { name: string }[]; pendingSeed: boolean; current: { style: { flowers: string; leaves: number; pot: number } } };
+const storedGarden = (page: Page) => page.evaluate(() => chrome.storage.local.get('garden').then((r) => r.garden as StoredGarden | null));
+
+test('garden: at 6 months the plant moves on its own, then the new seed is named', async ({ context }) => {
+  test.setTimeout(90_000);
+  const page = await newTab(context);
+  await seedSixMonths(page);
+  await page.reload();
+  const dialog = page.locator('dialog.new-seed');
+  await expect(dialog).toBeVisible({ timeout: 15_000 }); // after the ~2.4 s flight
+  await expect(dialog).toContainText('Hana moved to the garden');
+  expect(await storedGarden(page)).toMatchObject({ moved: [{ name: 'Hana' }], pendingSeed: true });
+  await expect(page.locator('#plantName')).toHaveText('New seed');
+
+  await dialog.locator('.name-input').fill('Kiko');
+  await dialog.locator('.flower:has-text("Pink")').click();
+  await dialog.locator('button:has-text("Plant the seed")').click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('#plantName')).toHaveText('Kiko');
+  await expect(page.locator('#plantMeta')).toContainText('1 in the garden');
+  expect((await storedGarden(page))!.current.style).toEqual({ flowers: 'pink', leaves: 1, pot: 1 });
+
+  await page.reload(); // no second move, no dialog
+  await expect(page.locator('#plantName')).toHaveText('Kiko');
+  await page.waitForTimeout(3000);
+  await expect(page.locator('dialog.new-seed')).toHaveCount(0);
+  expect((await storedGarden(page))!.moved).toHaveLength(1);
+});
+
+test('garden: two tabs at the threshold move the plant only once; closing before naming asks again', async ({ context }) => {
+  test.setTimeout(90_000);
+  const a = await newTab(context);
+  await seedSixMonths(a, { reduceMotion: true }); // no flight: straight to the dialog
+  const b = await newTab(context);
+  await a.reload();
+  await expect.poll(async () => (await storedGarden(a))?.moved.length ?? 0).toBe(1);
+  await b.waitForTimeout(1500);
+  expect((await storedGarden(a))!.moved).toHaveLength(1);
+
+  await a.close();
+  await b.close();
+  const c = await newTab(context);
+  await expect(c.locator('dialog.new-seed')).toBeVisible({ timeout: 10_000 });
+  await c.locator('dialog.new-seed button:has-text("Plant the seed")').click(); // suggested name
+  await expect(c.locator('#plantName')).not.toHaveText('New seed');
+});
+
+test('garden: backups carry the garden (schema v2)', async ({ context }, info) => {
+  test.setTimeout(90_000);
+  const page = await newTab(context);
+  await seedSixMonths(page, { reduceMotion: true });
+  await page.reload();
+  await page.locator('dialog.new-seed button:has-text("Plant the seed")').click();
+  await page.click('#openSettings');
+  const download = page.waitForEvent('download');
+  await page.click("button:has-text('Export backup')");
+  const file = info.outputPath('backup.json');
+  await (await download).saveAs(file);
+  const backup = JSON.parse(await readFile(file, 'utf8'));
+  expect(backup.schemaVersion).toBe(2);
+  expect(backup.garden.moved[0].name).toBe('Hana');
 });

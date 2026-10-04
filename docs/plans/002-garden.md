@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Status** | **Active** · decisions taken (G0 ✅); next G1 (lab: garden scene + generation styles) |
+| **Status** | **Active** · G0–G3 done (2026-10-05): the garden works in the extension; G4 left (deck videos) |
 | **Created** | 2026-10-04 |
-| **Updated** | 2026-10-04 |
+| **Updated** | 2026-10-05 |
 | **Supersedes** | — (extends [001 · MVP](001-mvp-wxt.md), "post-MVP: garden graduation") |
 | **Superseded by** | — |
 | **Live status** | [tracker.md](../tracker.md) → Post-MVP |
@@ -15,115 +15,103 @@ Growth slows down as the plant matures and it hits its leaf/flower caps: without
 
 ## 2. The idea in one paragraph
 
-When the potted ajisai reaches **6 months of care**, it **moves to the garden on its own**. A short ceremony carries it out through the window; it is now planted in the garden you see through the marumado, next to the mountains. A **new pot** arrives with **a new seed**: the user names it and picks its flower colour, and its leaves get a different green so each generation is recognisable. The camera is close to the sprout again. Over the years the garden fills with the plants you raised, a living record of your habits, gently reflecting how you're doing today.
+The potted ajisai reaches its **full look at 6 months of care**, and then **moves to the garden on its own**: it flies out through the round window and lands in a terraced Japanese garden. It **keeps growing there forever**, more and more slowly. A **new pot** arrives with **a new seed**: the user names it and picks its flower colour; its leaves get a different green and the pot a different glaze, so each generation is recognisable. Over the years the garden fills with the plants you raised, from the centre outward, a living record of your habits that gently reflects how you're doing today.
 
-## 3. Decisions (2026-10-04)
+## 3. Decisions
 
-| Topic | Decision |
-|---|---|
-| **When** | **Automatic at 6 months of care** (`plantDays ≥ 180`, ≈ 129 care days). The ceremony plays on the first visible new tab after the threshold is reached, never in the middle of answering a question |
-| **After moving** | **New pot + new seed**: growth restarts from 0, health carries on (same habits). The new pot has a different glaze, and the new plant's **leaves get a different green**, so generations are easy to tell apart |
-| **Garden plants** | **Soft reaction**: they look a little dull and droop slightly when your current health is low, but never wilt (displayed health = 0.65 + 0.35 × current health) |
-| **Variety** | **The user picks the flower colour** of each new seed: blue · violet · pink · white. The first plant keeps today's blue-violet |
-| **Name** | Asked again for the new seed (with suggestions) |
-| **Garden size** | Up to 8 visible plants; older ones stay in the data and the backup |
-| **Start over** | Erases everything, garden included (unchanged meaning) |
+| Topic | Decision | When |
+|---|---|---|
+| **When** | **Automatic at 6 months of care** (`plantDays ≥ 180`, ≈ 129 care days). The ceremony plays on the first visible new tab after the threshold (page open or tab shown), never right after an answer | 2026-10-04 |
+| **Growth curve** | **Compressed**: the potted plant reaches its full look (the old "1 year" look: most blooms, 4th pot, full-room camera) **at 6 months of care**. Renderer "look days" = plant days × 365 / 180 | 2026-10-05 |
+| **In the garden** | Starts at the full potted size and **keeps growing indefinitely** (more stems, bigger clump; asymptotic so it never explodes) | 2026-10-05 |
+| **After moving** | **New pot + new seed**: growth restarts from 0, health carries on (same habits). New glaze and a new leaf green | 2026-10-04 |
+| **Garden plants' health** | **Soft reaction**: displayed health = 0.65 + 0.35 × current health; they look dull, never wilt | 2026-10-04 |
+| **Flower colour** | **The user picks it** for every plant, **including the first** (in onboarding's name step): blue · violet · pink · white. Existing plants keep blue | 2026-10-05 |
+| **Leaf greens** | Only greens that can't be mistaken for "thirsty" (yellow-olive) or "wilting" (brown edges): emerald · blue-green · deep forest · jade | 2026-10-05 |
+| **Garden layout** | **Terraced Japanese garden** (lawn, two stone-walled terraces, a central tsukiyama hill, side mounds), seen through a **bigger, lower round window** (r 0.49 m, centre 0.52 m; was 0.42 / 0.50). Plants stand on raised ground so the potted plant never hides them | 2026-10-05 |
+| **Order** | **Centre-out**: 1 = top of the hill (centre), then left / right alternating, outward and up: middle terrace L/R, mounds L/R, hill shoulders L/R, front lawn | 2026-10-05 |
+| **Garden size** | 8 visible; with more, the newest takes the slot of the oldest (`slot = generation % 8`). All stay in the data and the backup | 2026-10-04 |
+| **Name** | Asked again for each new seed (with suggestions) | 2026-10-04 |
+| **Start over** | Erases everything, garden included | 2026-10-04 |
 
 ### Generation styles
-
-Each generation combines three traits; leaves and pot rotate automatically so two neighbours never match, flowers are the user's choice.
 
 | Trait | Options |
 |---|---|
 | Flowers (user) | blue · violet · pink · white |
-| Leaves (automatic, in order) | emerald (gen 1) · yellow-green · blue-green · deep forest · variegated (cream edges) |
-| Pot (automatic, in order) | indigo namako (gen 1) · celadon · black tenmoku with rust drips · white shino · unglazed terracotta |
+| Leaves (automatic, by generation) | emerald (gen 1) · blue-green · deep forest · jade |
+| Pot (automatic, by generation) | indigo namako (gen 1) · celadon · black tenmoku · white shino · terracotta |
 
 ## 4. Design
 
-### 4.1 Scene
+### 4.1 Scene (validated in the lab: `npm run lab` → `/lab/garden.html?scene=stage&stage=1`)
 
-- A garden ground outside the wall: moss, a gravel band, stepping stones and a small stone lantern (tōrō), between the window and the near hills (≈ 2–9 m away), lower than the counter.
-- **8 fixed slots** at different depths so plants don't hide each other and stay inside the round window from the close-up camera *and* from the full-room camera. Slot positions get validated in the lab (phase G1).
-- Garden plants use **lower detail** (fewer florets and leaves, simpler stems) and are rebuilt only when the displayed health moves a full step (5 steps between dull and fresh), so they cost almost nothing per frame. Light mode shows at most 3.
-- With more than 8 plants, the garden shows the 8 most recent; older ones stay in the data and the backup.
-- Sky / day–night light the garden like the mountains (same palette); at night the lantern glows faintly.
+- The room keeps its layout; the round window grows to r 0.49 m and sits at 0.52 m **from day one**, so the garden is visible (empty, with lantern and path) before the first move.
+- Garden ground 0.5 m below the counter; terrain = lawn → terrace 1 (+0.2 m) → terrace 2 (+0.2 m) → tsukiyama (+0.34 m) with side mounds. Waving terrace edges with nozura-zumi stone walls (one instanced mesh); stepping stones up the middle; Kasuga lantern on the left; clipped hedge at the back.
+- Garden plants: no pot (a soil/moss mound), **low detail** (36 florets per head instead of 80), rebuilt only when their look moves ≥ 5 days or their displayed health moves a full step (0.2). Light mode shows at most 3.
 
-### 4.2 Data (backup schema v2)
+### 4.2 Data
+
+A new storage item, separate from Settings (it's game state, not a preference):
 
 ```ts
-interface PlantStyle {
-  flowers: 'blue' | 'violet' | 'pink' | 'white'; // user's choice
-  leaves: number;        // index into the leaf palette (automatic)
-  pot: number;           // index into the pot styles (automatic)
-  seed: number;          // shape variation
-}
+interface PlantStyle { flowers: 'blue' | 'violet' | 'pink' | 'white'; leaves: number; pot: number }
 
-interface GardenPlant {
-  id: string;
-  name: string;
-  style: PlantStyle;
-  plantedAt: number;
-  movedAt: number;
-  careDays: number;      // growth when it moved (fixes its size)
-  slot: number;          // 0–7
+interface GardenState {
+  current: { style: PlantStyle; plantedAt: number; startCareDays: number };
+  moved: { id: string; name: string; style: PlantStyle; plantedAt: number; movedAt: number;
+           startCareDays: number; movedCareDays: number }[];   // oldest first
+  pendingSeed: boolean;  // the new seed hasn't been named yet
 }
-
-// Settings gains:
-garden: GardenPlant[];
-current: { style: PlantStyle; plantedAt: number; careDaysAtStart: number };
 ```
 
-- The potted plant's growth = `careDays − current.careDaysAtStart`. Health is unchanged (same habits, same engine).
-- "Day N" counts from `current.plantedAt`.
-- Moving freezes the past with a checkpoint (same mechanism as settings changes), so nothing is recomputed retroactively.
-- Backups become `schemaVersion: 2`; v1 backups still restore (no garden). Older builds already refuse newer backups.
+- Missing item = first generation (blue, started at planting, 0 care days): existing plants need no migration.
+- Potted growth: `plantDays = (careDays − current.startCareDays) × 7/5`. Garden growth: `look = 365 + (careDays − movedCareDays) × 7/5 × 365/180`.
+- **No checkpoint needed for a move**: care days are cumulative and nothing is reinterpreted; health simply continues.
+- "Day N" counts from `current.plantedAt`; the pill adds "N in the garden".
+- Backups: `schemaVersion: 2` adds `garden`; v1 backups restore with the default (first generation).
 
 ### 4.3 Experience
 
-1. **Approaching**: a few care days before the threshold, the plant pill says "Almost ready for the garden" so the move isn't a surprise.
-2. **Ceremony** (automatic, ≈ 3 s, on the first visible tab after the threshold): the plant lifts from the pot, passes through the round window and settles in its garden slot; petals drift. Reduce motion / light mode: a simple cross-fade.
-3. **New pot, new seed**: a short dialog: "Aoi is in the garden. Plant a new seed": name it (suggestions) and pick its flower colour. A new pot appears with the sprout; the camera goes back to the close-up, with the previous plant visible in the garden behind it.
-4. The help modal and onboarding mention the garden in one line each.
+1. **Almost ready**: from 170 plant days the pill says "Almost ready for the garden".
+2. **Ceremony** (≈ 2.5 s): the plant (without its pot) lifts out of the pot, flies through the round window and lands on its slot; the camera eases back to the close-up; a new pot with the sprout appears. Reduce motion / light mode: instant.
+3. **New seed dialog**: "Hana moved to the garden. Plant a new seed": name (suggestions) + flower colour. It comes back on the next tab if closed; it closes itself in other tabs once answered.
+4. Help modal: one extra tile ("After 6 months · it moves to the garden").
 
 ### 4.4 Edge cases
 
 | Case | Behaviour |
 |---|---|
-| The tab is closed before naming the new seed | The plant is already in the garden; the new-seed dialog comes back on the next tab. Until then the pot shows the sprout with default choices (suggested name, blue flowers) |
-| Several tabs open when the threshold is reached | The move is written once, under the same Web Lock as every other write; the other tabs just update (garden + new sprout), and only the tab that ran the ceremony shows the dialog |
-| Vacation, off-hours or a dormant plant at the threshold | Doesn't matter: the move happens on the next visible tab |
-| Restoring a backup from before the move | Restores exactly that state (plant back in the pot, no garden entry) |
+| Tab closed before naming the new seed | Plant already in the garden; dialog returns on the next tab. Meanwhile the sprout uses a suggested name and the default colour |
+| Several tabs open at the threshold | The move is written once, under the Web Lock, re-checking the stored state; other tabs just update |
+| Vacation / off-hours / dormant at the threshold | The move happens anyway on the next visible tab |
+| Restoring a backup from before the move | Restores exactly that state (plant back in the pot) |
 | Start over | Erases the garden too |
-| Reduce motion / light mode | Cross-fade instead of the flight through the window |
-
-### 4.5 Engine and tests
-
-- Pure functions: `isGardenTime(state)`, `moveToGarden(settings, state, now, choices)`, `nextStyle(garden, flowers)`; growth offset applied in one place.
-- Vitest: eligibility thresholds, growth restarts, health continuity, checkpoint exactness across a move, schema v1 → v2 restore.
-- E2E: simulate 6 months with the dev time travel, check the automatic move, garden slot, new pot + sprout, the new-seed dialog (also after closing the tab), two tabs at once, and backup round-trip.
-- Deck: a 4th video "six months later: to the garden" from `npm run render:deck`.
+| More than 8 moved plants | Newest replaces the oldest slot on screen; data keeps all |
+| Clock set back | Growth is clamped at 0; a move never happens twice (stored state re-checked) |
 
 ## 5. Phases
 
-| # | Phase | Done when |
-|---|---|---|
-| G0 | Decisions (§3) | ✅ Answered 2026-10-04 |
-| G1 | Lab: garden scene (ground, lantern, 8 slots, low-detail plants, day/night) **and the generation styles** (4 flower colours, 5 leaf greens, 5 pots) | Screenshots with 1, 3 and 8 plants from both cameras; every style variant side by side; frame cost measured |
-| G2 | Engine + data (schema v2, growth offset, move, eligibility) | Vitest green in 3 time zones |
-| G3 | New tab: garden rendering, "almost ready" notice, automatic ceremony, new pot, new-seed dialog | E2E: 6 months → automatic move → new pot + sprout → reload keeps everything |
-| G4 | Backup v2, help/onboarding copy, deck video, docs (tracker, bug log, plan) | Full suites green; docs updated |
+| # | Phase | Status | Done when |
+|---|---|---|---|
+| G0 | Decisions (§3) | ✅ 2026-10-04/05 | Answered |
+| G1 | Lab: garden scene, layout study (5 concepts → terraced, centre-out), generation styles | ✅ 2026-10-05 | Validated by the user from screenshots |
+| G2 | Engine + data: `engine/garden.ts` (compression, move, styles, garden growth/health), storage item, backup v2 | ✅ 2026-10-05 | Vitest 46 green in 3 time zones |
+| G3 | New tab: bigger window, terraced garden, garden plants, almost-ready, ceremony, new-seed dialog, flower colour in onboarding, help tile | ✅ 2026-10-05 | E2E 26/26 incl. move, two tabs, dialog after closing, backup v2 |
+| G4 | Re-render the explainer video (new growth labels) and the deck (+ "to the garden"); docs | 🟡 Explainer re-rendered, docs updated; **deck videos pending** (their "Day N of care" captions still use the old scale) | Videos regenerated; docs updated |
 
-## 6. Decisions
-
-All answered in §3 (G0 done).
-
-## 7. Risks
+## 6. Risks
 
 | Risk | Mitigation |
 |---|---|
-| Garden hidden by the counter or outside the round window at some camera distances | Validate slots in the lab from both cameras before building the rest (G1) |
-| Frame cost with 8 plants | Low-detail garden plants, rebuilt only on a health step; cap in light mode; measure in G1 |
-| Growth reset confuses the camera / pot size | Camera and pot already key on growth: the new seed gets the close-up and the small pot back, by design (in its new glaze) |
-| An automatic move feels abrupt | "Almost ready" notice beforehand; the ceremony waits for a fresh tab, not mid-answer |
-| Old backups / older extension versions | v1 restores into v2; older builds already reject newer schemas |
+| Frame cost with 8 garden plants | Low detail, rebuilt only on look/health steps; ≤ 3 in light mode |
+| Compression makes Hana jump in size on update | Expected and accepted (decision 2026-10-05); she was at day ~1 |
+| An automatic move feels abrupt | "Almost ready" notice; ceremony only when a tab opens / is shown |
+| Old backups / older builds | v1 restores into v2; older builds already reject newer schemas |
+
+## Known deviations
+
+| Plan | Implemented |
+|---|---|
+| §3 Layout study kept 5 concepts in code | Only the terraced layout remains (`scene/garden.ts`); the others were removed after the decision, and the lab preview now shows the chosen design only |
+| §4.3 "petals drift" on landing | A sparkle on the new pot after landing (reuses the answer animation) |

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Garden preview</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #e3d7c1; font: 15px system-ui, sans-serif; }
+      canvas { display: block; }
+      #caption { position: fixed; top: 22px; left: 50%; transform: translateX(-50%); padding: 8px 20px; border-radius: 999px; background: rgba(255, 252, 246, 0.93); font: 600 22px Georgia, serif; color: #2b2620; box-shadow: 0 8px 24px rgba(40, 30, 20, 0.15); }
+      #labels div { position: fixed; transform: translate(-50%, 0); padding: 3px 12px; border-radius: 999px; background: rgba(255, 252, 246, 0.92); font-size: 15px; color: #2b2620; white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <div id="caption"></div>
+    <div id="labels"></div>
+    <script type="module" src="/src/lab/garden-preview.ts"></script>
+  </body>
+</html>

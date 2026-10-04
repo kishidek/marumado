@@ -1,4 +1,4 @@
-import type { WorkHours } from '../engine/types';
+import { FLOWER_COLOURS, type FlowerColour, type WorkHours } from '../engine/types';
 import { el } from './dom';
 
 const WEEK = [
@@ -60,4 +60,32 @@ export function daysPicker(days: number[], onChange: (days: number[]) => boolean
       return b;
     }),
   );
+}
+
+const FLOWER_LABELS: Record<FlowerColour, { label: string; swatch: string }> = {
+  blue: { label: 'Blue', swatch: '#5b6fd6' },
+  violet: { label: 'Violet', swatch: '#9b5fc9' },
+  pink: { label: 'Pink', swatch: '#e07a9a' },
+  white: { label: 'White', swatch: '#efe9dc' },
+};
+
+/** Four hydrangea colours as swatch buttons (onboarding and the new-seed dialog). */
+export function flowerPicker(value: FlowerColour, onChange: (c: FlowerColour) => void) {
+  const group = el('div', { className: 'flowers', role: 'radiogroup', ariaLabel: 'Flower colour' });
+  const paint = (current: FlowerColour) => {
+    group.replaceChildren(
+      ...FLOWER_COLOURS.map((c) => {
+        const b = el('button', { type: 'button', className: 'flower', role: 'radio' }, el('span', { className: 'swatch' }), FLOWER_LABELS[c].label);
+        (b.firstElementChild as HTMLElement).style.background = FLOWER_LABELS[c].swatch;
+        b.setAttribute('aria-checked', String(c === current));
+        b.addEventListener('click', () => {
+          onChange(c);
+          paint(c);
+        });
+        return b;
+      }),
+    );
+  };
+  paint(value);
+  return group;
 }

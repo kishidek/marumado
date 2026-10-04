@@ -139,47 +139,79 @@ export function cabinetTexture(doors: number) {
   });
 }
 
-/**
- * Namako-style glaze for the lathe pot. Canvas top = rim, bottom = foot.
- * Deep indigo body, pale blue "sea cucumber" drips from the rim, bare clay at the foot.
- */
-export function glazeTexture() {
+/** Pot glazes, one per generation (see plans/002-garden.md): index 0 is the original indigo namako. */
+export interface Glaze {
+  name: string;
+  body: [string, string, string]; // gradient rim → middle → lower body
+  drip: [string, string] | null; // pooled glaze running down from the shoulder
+  speckle: [string, string];
+  rim: string;
+  inside: string;
+  foot: string;
+  shininess: number;
+  saucer: string;
+}
+
+export const GLAZES: Glaze[] = [
+  { name: 'indigo namako', body: ['#1d2a48', '#253a63', '#1b2846'], drip: ['rgba(140, 175, 205, 0.85)', 'rgba(95, 135, 180, 0.45)'], speckle: ['rgba(10, 15, 30, 0.35)', 'rgba(170, 200, 230, 0.35)'], rim: '#9fbad3', inside: '#141c30', foot: '#7a583e', shininess: 80, saucer: '#2a3550' },
+  { name: 'celadon', body: ['#7f9f8c', '#93b39f', '#7a9886'], drip: ['rgba(200, 222, 205, 0.7)', 'rgba(170, 200, 180, 0.35)'], speckle: ['rgba(60, 80, 70, 0.25)', 'rgba(230, 240, 232, 0.3)'], rim: '#c3d8c8', inside: '#5d7769', foot: '#8a6a50', shininess: 90, saucer: '#6f8c7b' },
+  { name: 'black tenmoku', body: ['#17110e', '#22180f', '#140f0c'], drip: ['rgba(150, 82, 38, 0.85)', 'rgba(110, 58, 26, 0.4)'], speckle: ['rgba(0, 0, 0, 0.4)', 'rgba(180, 110, 60, 0.35)'], rim: '#8a4b24', inside: '#0f0b09', foot: '#6b4a33', shininess: 95, saucer: '#1e1713' },
+  { name: 'white shino', body: ['#ece4d6', '#e4d9c6', '#d9cbb4'], drip: ['rgba(222, 160, 115, 0.55)', 'rgba(222, 170, 130, 0.2)'], speckle: ['rgba(120, 80, 50, 0.35)', 'rgba(255, 255, 255, 0.4)'], rim: '#d79b6f', inside: '#c9b9a1', foot: '#a07a5a', shininess: 55, saucer: '#d8ccb8' },
+  { name: 'terracotta', body: ['#a8603f', '#b06a48', '#9c5638'], drip: null, speckle: ['rgba(80, 40, 20, 0.3)', 'rgba(220, 160, 120, 0.3)'], rim: '#bb7653', inside: '#6e3d27', foot: '#8e4e33', shininess: 6, saucer: '#9d5a3c' },
+];
+
+/** Glaze texture for the lathe pot. Canvas top = rim, bottom = foot. */
+export function glazeTexture(variant = 0) {
+  const gl = GLAZES[variant % GLAZES.length]!;
   const w = 512;
   const h = 256;
   return canvasTexture(w, h, (ctx) => {
-    const r = prng(5);
+    const r = prng(5 + variant);
     const body = ctx.createLinearGradient(0, 0, 0, h);
-    body.addColorStop(0, '#1d2a48');
-    body.addColorStop(0.5, '#253a63');
-    body.addColorStop(0.9, '#1b2846');
+    body.addColorStop(0, gl.body[0]);
+    body.addColorStop(0.5, gl.body[1]);
+    body.addColorStop(0.9, gl.body[2]);
     ctx.fillStyle = body;
     ctx.fillRect(0, 0, w, h);
 
-    // Drips: pale glaze pooling at the shoulder and running down.
-    for (let x = 0; x < w; x += 3) {
-      const len = 30 + r() * 90 + Math.sin(x * 0.05) * 25;
-      const g = ctx.createLinearGradient(0, 18, 0, 18 + len);
-      g.addColorStop(0, 'rgba(140, 175, 205, 0.85)');
-      g.addColorStop(0.6, 'rgba(95, 135, 180, 0.45)');
-      g.addColorStop(1, 'rgba(60, 95, 150, 0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(x, 18, 3 + r() * 3, len);
+    if (gl.drip) {
+      // Drips: glaze pooling at the shoulder and running down.
+      for (let x = 0; x < w; x += 3) {
+        const len = 30 + r() * 90 + Math.sin(x * 0.05) * 25;
+        const g = ctx.createLinearGradient(0, 18, 0, 18 + len);
+        g.addColorStop(0, gl.drip[0]);
+        g.addColorStop(0.6, gl.drip[1]);
+        g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x, 18, 3 + r() * 3, len);
+      }
     }
-    // Speckles.
     for (let i = 0; i < 900; i++) {
-      ctx.fillStyle = r() < 0.6 ? 'rgba(10, 15, 30, 0.35)' : 'rgba(170, 200, 230, 0.35)';
+      ctx.fillStyle = r() < 0.6 ? gl.speckle[0] : gl.speckle[1];
       ctx.fillRect(r() * w, r() * h * 0.9, 1.5, 1.5);
     }
     // Rim band, inside (top rows) and bare clay foot (bottom rows).
-    ctx.fillStyle = '#9fbad3';
+    ctx.fillStyle = gl.rim;
     ctx.fillRect(0, 10, w, 6);
-    ctx.fillStyle = '#141c30';
+    ctx.fillStyle = gl.inside;
     ctx.fillRect(0, 0, w, 10);
     const foot = ctx.createLinearGradient(0, h - 26, 0, h);
-    foot.addColorStop(0, 'rgba(122, 88, 62, 0)');
-    foot.addColorStop(0.25, '#7a583e');
-    foot.addColorStop(1, '#5e432f');
+    foot.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    foot.addColorStop(0.25, gl.foot);
+    foot.addColorStop(1, gl.foot);
     ctx.fillStyle = foot;
     ctx.fillRect(0, h - 26, w, 26);
+  });
+}
+
+/** Soft disc of soil and moss where a garden plant meets the ground. */
+export function moundTexture() {
+  return canvasTexture(128, 128, (ctx) => {
+    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(58, 44, 30, 0.95)');
+    g.addColorStop(0.55, 'rgba(62, 70, 40, 0.75)');
+    g.addColorStop(1, 'rgba(62, 70, 40, 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 128);
   });
 }

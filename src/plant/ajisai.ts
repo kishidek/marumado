@@ -7,8 +7,9 @@ import {
   createShadowTexture,
   createTaperedTube,
 } from './geometry';
+import type { FlowerColour, PlantStyle } from '../engine/types';
 import { clamp01, lerp, rnd, smoothstep } from './math';
-import { glazeTexture } from '../scene/textures';
+import { GLAZES, glazeTexture, moundTexture } from '../scene/textures';
 
 export interface AjisaiParams {
   /** Days of care (growth layer). Not capped: the plant keeps changing. */
@@ -16,7 +17,18 @@ export interface AjisaiParams {
   /** 0 = wilted, 1 = healthy (health layer). */
   health: number;
   seed?: number;
+  /** Generation style (flowers / leaves / pot). Defaults to the first plant's look. */
+  style?: PlantStyle;
+  /** false = planted in the garden: no pot, keeps growing past the pot's size. */
+  potted?: boolean;
+  /** 'low' for garden plants seen from afar (fewer florets). */
+  detail?: 'full' | 'low';
 }
+
+// leaves → LEAF_GREENS index; pot → GLAZES index (scene/textures.ts).
+export type { FlowerColour, PlantStyle } from '../engine/types';
+
+export const FIRST_STYLE: PlantStyle = { flowers: 'blue', leaves: 0, pot: 0 };
 
 export interface AjisaiBuild {
   group: THREE.Group;
@@ -30,11 +42,14 @@ export interface AjisaiBuild {
 
 /** Day each stem sprouts. New stems keep arriving, so the plant fills out over the year. */
 const STEM_BIRTHS = [0, 10, 24, 42, 64, 90, 125, 170, 230];
+/** In the garden the clump keeps adding stems, more and more slowly. */
+const GARDEN_STEM_BIRTHS = [...STEM_BIRTHS, 300, 380, 470, 580, 720, 900];
 /** Days between leaf nodes on a stem. */
 const NODE_INTERVAL = 7;
 /** Leaf cap: each stem keeps only its top N leaf pairs; older ones fade and drop (as real hydrangeas do). */
 export const VISIBLE_LEAF_PAIRS = 5;
 const FLORETS_PER_HEAD = 80;
+const FLORETS_PER_HEAD_LOW = 36;
 const MAX_FALLEN_LEAVES = 14;
 /** So that day 0 already shows a sprout instead of bare soil. */
 const SPROUT_HEAD_START = 5;
@@ -52,16 +67,38 @@ const materials = {
   leaf: new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }),
   floret: new THREE.MeshLambertMaterial({ side: THREE.DoubleSide }),
   stem: new THREE.MeshLambertMaterial({ vertexColors: true }),
-  pot: new THREE.MeshPhongMaterial({ map: glazeTexture(), shininess: 80, specular: new THREE.Color('#4a4a4a') }),
-  saucer: new THREE.MeshPhongMaterial({ color: '#2a3550', shininess: 60, specular: new THREE.Color('#3a3a3a') }),
   soil: new THREE.MeshLambertMaterial({ color: '#3a2a1f' }),
   shadow: new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }),
+  mound: new THREE.MeshLambertMaterial({ map: moundTexture(), transparent: true, depthWrite: false }),
 };
+
+/** One pot + saucer material pair per glaze, created on first use. */
+const potMaterials = new Map<number, { pot: THREE.Material; saucer: THREE.Material }>();
+function potMaterialsFor(i: number) {
+  const key = i % GLAZES.length;
+  if (!potMaterials.has(key)) {
+    const g = GLAZES[key]!;
+    potMaterials.set(key, {
+      pot: new THREE.MeshPhongMaterial({ map: glazeTexture(key), shininess: g.shininess, specular: new THREE.Color(g.shininess > 20 ? '#4a4a4a' : '#111111') }),
+      saucer: new THREE.MeshPhongMaterial({ color: g.saucer, shininess: Math.min(60, g.shininess), specular: new THREE.Color('#3a3a3a') }),
+    });
+  }
+  return potMaterials.get(key)!;
+}
 const floretGeometry = createFloretGeometry();
 const coreGeometry = new THREE.IcosahedronGeometry(1, 1);
 
 const hsl = (h: number, s: number, l: number) => new THREE.Color().setHSL(h, s, l, THREE.SRGBColorSpace);
-const LEAF_HEALTHY = hsl(0.3, 0.5, 0.32);
+/**
+ * Healthy leaf greens, one per generation (count must equal GARDEN.leafGreens in engine/garden.ts). Kept away from the yellow-olive band that means
+ * "thirsty" / "wilted", so a different green never reads as a health signal.
+ */
+export const LEAF_GREENS = [
+  { name: 'emerald', color: hsl(0.3, 0.5, 0.32) },
+  { name: 'blue-green', color: hsl(0.44, 0.4, 0.29) },
+  { name: 'deep forest', color: hsl(0.33, 0.46, 0.2) },
+  { name: 'jade', color: hsl(0.39, 0.3, 0.4) },
+];
 const LEAF_THIRSTY = hsl(0.24, 0.32, 0.34);
 const LEAF_WILTED = hsl(0.12, 0.45, 0.36);
 const LEAF_EDGE = hsl(0.07, 0.5, 0.24);
@@ -70,13 +107,38 @@ const STEM_WOOD = hsl(0.07, 0.35, 0.27);
 const FLOWER_BUD = hsl(0.22, 0.35, 0.72);
 const FLOWER_DRY = hsl(0.08, 0.32, 0.4);
 
-function leafColorFor(health: number): THREE.Color {
+function leafColorFor(health: number, leaves: number): THREE.Color {
+  const healthy = LEAF_GREENS[leaves % LEAF_GREENS.length]!.color;
   return health > 0.5
-    ? LEAF_THIRSTY.clone().lerp(LEAF_HEALTHY, (health - 0.5) / 0.5)
+    ? LEAF_THIRSTY.clone().lerp(healthy, (health - 0.5) / 0.5)
     : LEAF_WILTED.clone().lerp(LEAF_THIRSTY, health / 0.5);
 }
 
-export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBuild {
+/** Floret colour (before health / bloom adjustments) for a flower palette. r ∈ [0,1), z = height on the head. */
+function floretHSL(flowers: FlowerColour, r: number, z: number): [number, number, number] {
+  switch (flowers) {
+    case 'violet':
+      return [0.74 + 0.07 * r + 0.02 * (1 - z), 0.5, 0.58 + 0.08 * z];
+    case 'pink':
+      return [(0.93 + 0.06 * r + 0.02 * (1 - z)) % 1, 0.55, 0.66 + 0.06 * z];
+    case 'white':
+      return [0.14 + 0.05 * r, 0.16, 0.86 + 0.05 * z];
+    default: // blue: Kyoto blue → violet (the first plant)
+      return [0.62 + 0.1 * r + 0.03 * (1 - z), 0.55, 0.6 + 0.08 * z];
+  }
+}
+
+const CORE_HSL: Record<FlowerColour, [number, number, number]> = {
+  blue: [0.66, 0.4, 0.4],
+  violet: [0.77, 0.38, 0.38],
+  pink: [0.95, 0.4, 0.45],
+  white: [0.2, 0.14, 0.62],
+};
+
+/** Garden plants keep filling out: up to ~1.6× the pot-size plant, approached slowly, never reached. */
+const gardenScale = (d: number) => 1 + 0.6 * (1 - Math.exp(-Math.max(0, d - 370) / 900));
+
+export function buildAjisai({ days, health, seed = 7, style = FIRST_STYLE, potted = true, detail = 'full' }: AjisaiParams): AjisaiBuild {
   const h = clamp01(health);
   const wilt = 1 - h;
   const d = Math.max(0, days) + SPROUT_HEAD_START;
@@ -86,20 +148,37 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
   const ownedGeometries: THREE.BufferGeometry[] = [];
   const instanced: THREE.InstancedMesh[] = [];
 
-  // --- Pot, soil, contact shadow -------------------------------------------------------
-  const potR = potRadiusFor(days);
-  const pot = createPot(potR);
-  ownedGeometries.push(pot.geometry, pot.saucer);
-  group.add(new THREE.Mesh(pot.geometry, materials.pot));
-  group.add(new THREE.Mesh(pot.saucer, materials.saucer));
+  // Stems, leaves and flowers live in their own group so garden plants can keep growing in size.
+  const parts = new THREE.Group();
+  group.add(parts);
+  const scale = potted ? 1 : gardenScale(d);
+  parts.scale.setScalar(scale);
 
-  const soilGeo = new THREE.CircleGeometry(pot.soilRadius, 28).rotateX(-Math.PI / 2);
-  ownedGeometries.push(soilGeo);
-  const soil = new THREE.Mesh(soilGeo, materials.soil);
-  soil.position.y = pot.soilY;
-  group.add(soil);
+  // --- Pot (or garden mound), soil, contact shadow --------------------------------------
+  const potR = potted ? potRadiusFor(days) : 0.1 + 0.12 * mat;
+  let pot: { height: number; soilY: number; soilRadius: number };
+  if (potted) {
+    const p = createPot(potR);
+    const pm = potMaterialsFor(style.pot);
+    ownedGeometries.push(p.geometry, p.saucer);
+    group.add(new THREE.Mesh(p.geometry, pm.pot));
+    group.add(new THREE.Mesh(p.saucer, pm.saucer));
+    const soilGeo = new THREE.CircleGeometry(p.soilRadius, 28).rotateX(-Math.PI / 2);
+    ownedGeometries.push(soilGeo);
+    const soil = new THREE.Mesh(soilGeo, materials.soil);
+    soil.position.y = p.soilY;
+    group.add(soil);
+    pot = p;
+  } else {
+    const moundGeo = new THREE.CircleGeometry(potR * 1.6 * scale, 28).rotateX(-Math.PI / 2);
+    ownedGeometries.push(moundGeo);
+    const mound = new THREE.Mesh(moundGeo, materials.mound);
+    mound.position.y = 0.002;
+    group.add(mound);
+    pot = { height: 0, soilY: 0, soilRadius: potR };
+  }
 
-  const shadowGeo = new THREE.PlaneGeometry(potR * 3.8, potR * 3.8).rotateX(-Math.PI / 2);
+  const shadowGeo = new THREE.PlaneGeometry(potR * 3.8 * scale, potR * 3.8 * scale).rotateX(-Math.PI / 2);
   ownedGeometries.push(shadowGeo);
   const shadow = new THREE.Mesh(shadowGeo, materials.shadow);
   shadow.position.y = 0.0015;
@@ -110,7 +189,7 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
   const leafGeo = createLeafGeometry({
     droop: 0.08 + 0.5 * Math.pow(wilt, 1.3),
     curl: Math.pow(wilt, 1.2) * 0.9,
-    base: leafColorFor(h),
+    base: leafColorFor(h, style.leaves),
     edge: LEAF_EDGE,
     edgeAmount: clamp01((0.65 - h) / 0.6),
   });
@@ -136,7 +215,8 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
     spread = Math.max(spread, Math.hypot(p.x, p.z) + pad);
   };
 
-  STEM_BIRTHS.forEach((birth, s) => {
+  const florets = detail === 'low' ? FLORETS_PER_HEAD_LOW : FLORETS_PER_HEAD;
+  (potted ? STEM_BIRTHS : GARDEN_STEM_BIRTHS).forEach((birth, s) => {
     if (birth > d) return;
     const age = d - birth;
     const vigor = 0.78 + 0.22 * rnd(seed, s, 1);
@@ -163,7 +243,7 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
     const theta = s * GOLDEN_ANGLE + (rnd(seed, s, 2) - 0.5) * 0.5;
     const out = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
     const tilt = s === 0 ? 0.05 : 0.28 + 0.34 * rnd(seed, s, 3);
-    const baseR = s === 0 ? 0 : Math.min(potR * 0.55, 0.01 + 0.012 * Math.sqrt(s));
+    const baseR = s === 0 ? 0 : potted ? Math.min(potR * 0.55, 0.01 + 0.012 * Math.sqrt(s)) : 0.012 + 0.02 * Math.sqrt(s);
     const base = new THREE.Vector3(out.x * baseR, pot.soilY, out.z * baseR);
     const bend = stemDroop * (0.55 + 0.9 * bloom) * (0.7 + 0.3 * mat);
     const angleAt = (t: number) => tilt * (1 - 0.4 * t) + bend * Math.pow(t, 1.6) * 1.5;
@@ -260,20 +340,21 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
       const coreR = R * 0.9 * smoothstep(0, 0.6, bloom);
       if (coreR > 0) {
         coreMatrices.push(new THREE.Matrix4().makeScale(coreR, coreR, coreR).setPosition(center));
-        const core = hsl(0.66, 0.4 * (0.35 + 0.65 * h), 0.4);
+        const [ch, cs, cl] = CORE_HSL[style.flowers];
+        const core = hsl(ch, cs * (0.35 + 0.65 * h), cl);
         core.lerp(FLOWER_BUD, 1 - smoothstep(0.25, 0.85, bloom)).multiplyScalar(0.7);
         core.lerp(FLOWER_DRY.clone().multiplyScalar(0.7), 1 - smoothstep(0.05, 0.45, h));
         coreColors.push(core);
       }
 
-      for (let k = 0; k < FLORETS_PER_HEAD; k++) {
-        const z = 1 - ((k + 0.5) / FLORETS_PER_HEAD) * 1.75;
+      for (let k = 0; k < florets; k++) {
+        const z = 1 - ((k + 0.5) / florets) * 1.75;
         const rr = Math.sqrt(Math.max(0, 1 - z * z));
         const a = k * GOLDEN_ANGLE;
         const nrm = new THREE.Vector3(rr * Math.cos(a), z, rr * Math.sin(a)).applyQuaternion(q);
         const open = clamp01(bloom * 1.6 - rnd(seed, s, k, 11) * 0.6);
         if (open <= 0.02) continue;
-        const size = R * 0.26 * (0.75 + 0.5 * rnd(seed, s, k, 12)) * (0.4 + 0.6 * open);
+        const size = R * (florets === FLORETS_PER_HEAD ? 0.26 : 0.36) * (0.75 + 0.5 * rnd(seed, s, k, 12)) * (0.4 + 0.6 * open);
 
         const ref = Math.abs(nrm.y) < 0.9 ? UP : new THREE.Vector3(1, 0, 0);
         const X = new THREE.Vector3().crossVectors(ref, nrm).normalize();
@@ -285,9 +366,9 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
             .setPosition(center.clone().addScaledVector(nrm, R)),
         );
 
-        // Kyoto blue → violet; opens from pale green; fades and browns when neglected.
-        const hue = 0.62 + 0.1 * rnd(seed, s, k, 14) + 0.03 * (1 - z);
-        const c = hsl(hue, 0.55 * (0.35 + 0.65 * h), (0.6 + 0.08 * z) * (0.85 + 0.15 * h));
+        // The generation's colour; opens from pale green; fades and browns when neglected.
+        const [fh, fs, fl] = floretHSL(style.flowers, rnd(seed, s, k, 14), z);
+        const c = hsl(fh, fs * (0.35 + 0.65 * h), fl * (0.85 + 0.15 * h));
         c.lerp(FLOWER_BUD, 1 - smoothstep(0.25, 0.85, bloom));
         c.lerp(FLOWER_DRY, 1 - smoothstep(0.05, 0.45, h));
         floretColors.push(c);
@@ -314,7 +395,7 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
     const merged = mergeGeometries(stemGeos);
     stemGeos.forEach((g) => g.dispose());
     ownedGeometries.push(merged);
-    group.add(new THREE.Mesh(merged, materials.stem));
+    parts.add(new THREE.Mesh(merged, materials.stem));
   }
   const addInstanced = (
     geo: THREE.BufferGeometry,
@@ -330,7 +411,7 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
     });
     mesh.computeBoundingSphere();
     instanced.push(mesh);
-    group.add(mesh);
+    parts.add(mesh);
   };
   addInstanced(leafGeo, materials.leaf, leafMatrices, leafTints);
   addInstanced(coreGeometry, materials.floret, coreMatrices, coreColors);
@@ -338,11 +419,11 @@ export function buildAjisai({ days, health, seed = 7 }: AjisaiParams): AjisaiBui
 
   return {
     group,
-    height,
-    spread,
+    height: height * scale,
+    spread: spread * scale,
     potRadius: potR,
     stats: {
-      stems: STEM_BIRTHS.filter((b) => b <= d).length,
+      stems: (potted ? STEM_BIRTHS : GARDEN_STEM_BIRTHS).filter((b) => b <= d).length,
       leaves: leafMatrices.length - fallen.length,
       fallenLeaves: fallen.length,
       flowerHeads,

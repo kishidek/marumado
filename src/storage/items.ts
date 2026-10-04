@@ -1,6 +1,7 @@
 import { storage } from '#imports';
-import { changesHistory, freezePast, makeCheckpoint, type Checkpoint } from '../engine/model';
-import type { AnswerEvent, Settings } from '../engine/types';
+import { initialGarden, isGardenTime, moveToGarden, plantNewSeed } from '../engine/garden';
+import { changesHistory, computeState, freezePast, makeCheckpoint, type Checkpoint } from '../engine/model';
+import type { AnswerEvent, FlowerColour, GardenState, Settings } from '../engine/types';
 
 /**
  * Everything lives in chrome.storage.local. Writes are serialized across all open
@@ -11,6 +12,8 @@ export const settingsItem = storage.defineItem<Settings | null>('local:settings'
 export const eventsItem = storage.defineItem<AnswerEvent[]>('local:events', { fallback: [], version: 1 });
 /** Summary of everything before the oldest kept event (see compactIfNeeded). */
 export const checkpointItem = storage.defineItem<Checkpoint | null>('local:checkpoint', { fallback: null, version: 1 });
+/** Garden game state (plans/002-garden.md). null = first generation, nothing moved yet. */
+export const gardenItem = storage.defineItem<GardenState | null>('local:garden', { fallback: null, version: 1 });
 /** UI memory that isn't plant data (e.g. the last day we nagged about backups). */
 export const backupReminderItem = storage.defineItem<string | null>('local:ui:backupReminderDay', { fallback: null });
 export const vacationReminderItem = storage.defineItem<string | null>('local:ui:vacationReminderDay', { fallback: null });
@@ -49,24 +52,52 @@ export const saveSettings = (update: (s: Settings) => Settings) =>
     await settingsItem.setValue(after);
   });
 
-export const plant = (settings: Settings) =>
+export const plant = (settings: Settings, flowers: FlowerColour = 'blue') =>
   locked(async () => {
     await eventsItem.setValue([]);
     await checkpointItem.setValue(null);
+    await gardenItem.setValue(initialGarden(settings, flowers));
     await settingsItem.setValue(settings);
   });
 
+/**
+ * Moves the potted plant to the garden if it's time, re-checked on the stored data inside the
+ * lock so two tabs can't move it twice. Returns the name of the plant that moved, or null.
+ */
+export const moveToGardenIfDue = (now = Date.now()) =>
+  locked(async () => {
+    const settings = await settingsItem.getValue();
+    if (!settings) return null;
+    const garden = (await gardenItem.getValue()) ?? initialGarden(settings);
+    const state = computeState(settings, await eventsItem.getValue(), now, await checkpointItem.getValue());
+    if (!isGardenTime(garden, state)) return null;
+    await gardenItem.setValue(moveToGarden(garden, state, now, { id: crypto.randomUUID(), name: settings.plantName }));
+    return settings.plantName;
+  });
+
+/** The user named the new seed and picked its colour. */
+export const nameNewSeed = (name: string, flowers: FlowerColour) =>
+  locked(async () => {
+    const settings = await settingsItem.getValue();
+    const garden = await gardenItem.getValue();
+    if (!settings || !garden?.pendingSeed) return;
+    await gardenItem.setValue(plantNewSeed(garden, flowers));
+    await settingsItem.setValue({ ...settings, plantName: name });
+  });
+
 /** Restore: keep a snapshot of what was there, then replace in one locked step. */
-export const replaceAll = (settings: Settings, events: AnswerEvent[], checkpoint: Checkpoint | null = null) =>
+export const replaceAll = (settings: Settings, events: AnswerEvent[], checkpoint: Checkpoint | null = null, garden: GardenState | null = null) =>
   locked(async () => {
     await previousItem.setValue({
       settings: await settingsItem.getValue(),
       events: await eventsItem.getValue(),
       checkpoint: await checkpointItem.getValue(),
+      garden: await gardenItem.getValue(),
       savedAt: Date.now(),
     });
     await eventsItem.setValue(events);
     await checkpointItem.setValue(checkpoint);
+    await gardenItem.setValue(garden);
     await settingsItem.setValue(settings);
   });
 
@@ -74,6 +105,7 @@ export const clearAll = () =>
   locked(async () => {
     await eventsItem.setValue([]);
     await checkpointItem.setValue(null);
+    await gardenItem.setValue(null);
     await settingsItem.setValue(null);
   });
 
@@ -110,6 +142,6 @@ export const compactIfNeeded = (now = Date.now()) =>
   });
 
 export function watchAll(onChange: () => void) {
-  const stops = [settingsItem.watch(onChange), eventsItem.watch(onChange), checkpointItem.watch(onChange)];
+  const stops = [settingsItem.watch(onChange), eventsItem.watch(onChange), checkpointItem.watch(onChange), gardenItem.watch(onChange)];
   return () => stops.forEach((stop) => stop());
 }

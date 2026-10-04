@@ -19,6 +19,7 @@ export function initHelp(opts: { plantName: () => string; reduceMotion: () => bo
       tile('Skip it', 'and it droops'),
       tile('It never dies', 'care brings it back'),
       tile('Only at work', 'no questions after hours'),
+      tile('After 6 months', 'it moves to the garden'),
       tile('Stays in this browser', 'back it up in Settings'),
     );
     wrap.hidden = false;

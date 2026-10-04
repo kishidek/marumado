@@ -1,20 +1,20 @@
 import { ShieldCheck, Sprout } from 'lucide';
 import { CATALOG, DEFAULT_HABITS, intervalLabel, MAX_HABITS } from '../engine/catalog';
-import type { Settings, WorkHours } from '../engine/types';
+import { NAME_IDEAS } from '../engine/garden';
+import type { FlowerColour, Settings, WorkHours } from '../engine/types';
 import { $, el, icon, setBackgroundInert } from './dom';
 import { habitIcon } from './icons';
-import { daysPicker, hoursPicker } from './pickers';
-
-const NAME_IDEAS = ['Aoi', 'Hana', 'Mizu', 'Sora', 'Kiko'];
+import { daysPicker, flowerPicker, hoursPicker } from './pickers';
 const STEPS = 5;
 
 /**
  * First run. It can't be dismissed: nothing is saved until "Plant the seed",
  * so closing the tab halfway simply starts over next time.
  */
-export function openOnboarding(onDone: (s: Settings) => void) {
+export function openOnboarding(onDone: (s: Settings, flowers: FlowerColour) => void) {
   let step = 0;
   let name = '';
+  let flowers: FlowerColour = 'blue';
   const selected = new Set(DEFAULT_HABITS);
   const hours: WorkHours = { start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5] };
   const next = $<HTMLButtonElement>('obNext');
@@ -34,7 +34,7 @@ export function openOnboarding(onDone: (s: Settings) => void) {
         el(
           'p',
           {},
-          'Each time you open a new tab, your ajisai may ask one quick question about a healthy habit. Keep it up and it grows, gets new pots, and blooms. Skip too often and it droops, but it never dies.',
+          'Each time you open a new tab, your ajisai may ask one quick question about a healthy habit. Keep it up and it grows, gets new pots, and blooms; after six months it moves to the garden and a new seed begins. Skip too often and it droops, but it never dies.',
         ),
       );
     } else if (step === 1) {
@@ -50,7 +50,7 @@ export function openOnboarding(onDone: (s: Settings) => void) {
       const ideas = el(
         'div',
         { className: 'days' },
-        ...NAME_IDEAS.map((n) => {
+        ...NAME_IDEAS.slice(0, 5).map((n) => {
           const b = el('button', { type: 'button', className: 'chip' }, n);
           b.addEventListener('click', () => {
             input.value = n;
@@ -65,6 +65,8 @@ export function openOnboarding(onDone: (s: Settings) => void) {
         input,
         el('p', { className: 'note' }, 'Need an idea?'),
         ideas,
+        el('p', { className: 'note' }, 'Flower colour'),
+        flowerPicker(flowers, (c) => (flowers = c)),
       );
       sync();
     } else if (step === 2) {
@@ -145,7 +147,7 @@ export function openOnboarding(onDone: (s: Settings) => void) {
       vacations: [],
       reduceMotion: false,
       lastExportAt: null,
-    });
+    }, flowers);
   };
   back.onclick = () => {
     step = Math.max(0, step - 1);

@@ -4,12 +4,13 @@ import { buildAjisai, VISIBLE_LEAF_PAIRS, type AjisaiBuild } from '../plant/ajis
 import { clamp01, lerp, smoothstep } from '../plant/math';
 import './style.css';
 
+/** Look days (renderer scale). Growth is compressed: 365 look days = 6 months of care (plans/002-garden.md). */
 const STAGES = [
   { days: 0, label: 'Start' },
-  { days: 30, label: '30 days' },
-  { days: 90, label: '3 months' },
-  { days: 180, label: '6 months' },
-  { days: 365, label: '1 year' },
+  { days: 30, label: '2 weeks' },
+  { days: 90, label: '6 weeks' },
+  { days: 180, label: '3 months' },
+  { days: 365, label: '6 months' },
 ];
 const HEALTH_PRESETS = [
   { value: 1, label: 'Healthy' },
@@ -193,10 +194,11 @@ const healthButtons = chips('healthChips', HEALTH_PRESETS, (i) => {
   syncUI();
 });
 
+/** Look days → time of care (365 look days = 6 months). */
 function describeDays(d: number) {
-  if (d < 30) return `day ${d}`;
-  if (d < 365) return `day ${d} · ~${(d / 30).toFixed(d < 60 ? 1 : 0)} months`;
-  return `day ${d} · 1 year`;
+  const careDays = Math.round((d * 180) / 365);
+  if (careDays < 30) return `look ${d} · ${careDays} days of care`;
+  return `look ${d} · ~${(careDays / 30).toFixed(careDays < 60 ? 1 : 0)} months of care`;
 }
 
 function syncUI() {

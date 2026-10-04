@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { AjisaiBuild } from '../plant/ajisai';
 import { createFeedback, type Cheer } from './feedback';
+import { createGarden } from './garden';
 import { createRoom, MARUMADO, PLANT_SPOT } from './room';
 import { celestialAt, skyAt } from './sky';
 
@@ -15,6 +16,13 @@ export interface WindowScene {
   cheer(kind: Cheer): void;
   /** Advances animations by `dt` seconds; true while the scene needs another frame. */
   update(dt: number): boolean;
+  /** Plants that moved to the garden, with their slots. Builds stay owned by the caller. */
+  setGarden(plants: { build: AjisaiBuild; slot: number }[]): void;
+  /**
+   * Move ceremony: `flyer` (the plant without its pot) lifts from the pot, flies out through the
+   * round window and lands on `slot`; then `done` runs. The camera eases throughout.
+   */
+  flyToGarden(flyer: AjisaiBuild, slot: number, done: () => void): void;
 }
 
 /** Smooth 1D value noise from a few sines: cheap, deterministic, good enough for ridgelines. */
@@ -123,6 +131,10 @@ export function createWindowScene(): WindowScene {
   pagoda.position.set(4.2, -0.75, -21.9);
   scene.add(pagoda);
 
+  // --- Garden (outside, below the counter) --------------------------------------------------
+  const garden = createGarden();
+  scene.add(garden.group);
+
   // --- Room ------------------------------------------------------------------------------
   const room = createRoom();
   scene.add(room.group);
@@ -151,7 +163,15 @@ export function createWindowScene(): WindowScene {
   const ROOM = { halfH: 0.7, below: 0.3, x: MARUMADO.x - 0.06, minHalfW: MARUMADO.r + 0.12 };
   const FULL_ROOM_AT_DAYS = 240;
 
-  function frame() {
+  /** Where the camera wants to be; it eases there in update() (instant on resize / first frame). */
+  const goal = { pos: new THREE.Vector3(), target: new THREE.Vector3(), set: false };
+  let easing = false;
+
+  type Flight = { flyer: AjisaiBuild; from: THREE.Vector3; to: THREE.Vector3; t: number; done: () => void };
+  let flight: Flight | null = null;
+  const FLIGHT_S = 2.4;
+
+  function frame(instant = true) {
     camera.aspect = size.w / size.h;
     const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const t = THREE.MathUtils.smoothstep(growthDays, 0, FULL_ROOM_AT_DAYS);
@@ -163,10 +183,51 @@ export function createWindowScene(): WindowScene {
     // Narrow (portrait) screens: keep enough width in view.
     halfH = Math.max(halfH, THREE.MathUtils.lerp(CLOSE.minHalfW, ROOM.minHalfW, t) / camera.aspect);
     const dist = halfH / tan;
-    target.set(THREE.MathUtils.lerp(CLOSE.x, ROOM.x, t), halfH - below, 0);
-    camera.position.set(target.x, target.y + dist * 0.12, dist);
+    goal.target.set(THREE.MathUtils.lerp(CLOSE.x, ROOM.x, t), halfH - below, 0);
+    goal.pos.set(goal.target.x, goal.target.y + dist * 0.12, dist);
+    if (instant || !goal.set) {
+      target.copy(goal.target);
+      camera.position.copy(goal.pos);
+      easing = false;
+    } else {
+      easing = true;
+    }
+    goal.set = true;
     camera.lookAt(target);
     camera.updateProjectionMatrix();
+  }
+
+  function stepCamera(dt: number) {
+    if (!easing) return false;
+    const k = 1 - Math.exp(-dt * 2.2);
+    camera.position.lerp(goal.pos, k);
+    target.lerp(goal.target, k);
+    camera.lookAt(target);
+    if (camera.position.distanceTo(goal.pos) < 0.0005 && target.distanceTo(goal.target) < 0.0005) {
+      camera.position.copy(goal.pos);
+      target.copy(goal.target);
+      camera.lookAt(target);
+      easing = false;
+    }
+    return true;
+  }
+
+  function stepFlight(dt: number) {
+    if (!flight) return false;
+    flight.t = Math.min(1, flight.t + dt / FLIGHT_S);
+    const e = flight.t * flight.t * (3 - 2 * flight.t);
+    const p = flight.from.clone().lerp(flight.to, e);
+    p.y += Math.sin(Math.PI * e) * 0.55; // arc up through the window
+    flight.flyer.group.position.copy(p);
+    flight.flyer.group.rotation.y = e * Math.PI * 0.8;
+    if (flight.t >= 1) {
+      scene.remove(flight.flyer.group);
+      flight.flyer.dispose();
+      const done = flight.done;
+      flight = null;
+      done();
+    }
+    return true;
   }
 
   return {
@@ -192,10 +253,12 @@ export function createWindowScene(): WindowScene {
       sun.intensity = p.sunIntensity;
       fill.intensity = 0.3 + 0.9 * (1 - p.lamp);
       lamp.intensity = p.lamp * 2.6;
+      garden.setHour(p);
       // Paper is back-lit by the sky outside.
       shojiMat.emissive.copy(p.bottom).multiplyScalar(0.35 * (1 - p.lamp) + 0.05);
     },
     setPlant(build, days) {
+      const growing = days !== growthDays;
       growthDays = days;
       if (plant) {
         scene.remove(plant.group);
@@ -204,17 +267,30 @@ export function createWindowScene(): WindowScene {
       plant = build;
       build.group.position.copy(PLANT_SPOT);
       scene.add(build.group);
-      frame();
+      // A big framing change (new seed after a move) eases; daily growth and health just snap.
+      frame(!growing || Math.abs(camera.position.z - goal.pos.z) < 0.05 || !goal.set);
+    },
+    setGarden(plants) {
+      garden.setPlants(plants);
+    },
+    flyToGarden(flyer, slot, done) {
+      const from = PLANT_SPOT.clone().add(new THREE.Vector3(0, 0.12, 0));
+      flyer.group.position.copy(from);
+      scene.add(flyer.group);
+      flight = { flyer, from, to: garden.slotPosition(slot), t: 0, done };
     },
     cheer(kind) {
       feedback.play(kind, () => (plant ? { group: plant.group, height: plant.height, potRadius: plant.potRadius } : null));
     },
     update(dt) {
-      return feedback.update(dt);
+      const a = feedback.update(dt);
+      const b = stepFlight(dt);
+      const c = stepCamera(dt);
+      return a || b || c;
     },
     resize(width, height) {
       size = { w: width, h: height };
-      frame();
+      frame(true);
     },
   };
 }

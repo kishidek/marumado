@@ -2,7 +2,7 @@
 
 **Living document.** Status of every plan in [plans/](plans/) (phases and risks come from [001 · MVP](plans/001-mvp-wxt.md)); updated with every change. Bugs: [bugs.md](bugs.md). Index of all docs: [README.md](README.md).
 
-## Summary (2026-10-04)
+## Summary (2026-10-05)
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
@@ -11,11 +11,11 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Phases | 0–7 and 9 ✅ · 8 (Chrome Web Store) ⏸️ postponed |
 | P0 risks | 9 / 9 ✅ |
 | P1 risks | 11 / 11 ✅ |
-| P2 risks | 5 / 6 ✅ · "very old plants" 🟡 waits for garden graduation |
+| P2 risks | 6 / 6 ✅ |
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
-| Bugs | 24 fixed · 0 open |
-| Tests | Vitest 37 (× 3 time zones) · Playwright E2E 23 |
-| Left | Post-MVP only: garden graduation (planning, [002 · garden](plans/002-garden.md)), holidays, mood / caffeine habits |
+| Bugs | 26 fixed · 0 open |
+| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 26 |
+| Left | Garden: deck videos (G4). Post-MVP: holidays, mood / caffeine habits |
 
 ## Phases
 
@@ -71,7 +71,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Plant name with kanji / emoji, long names | ✅ | System font fallback; ellipsis after 14ch |
 | Event log growth over years | ✅ | Checkpoint compaction: events older than 90 days fold into an exact checkpoint (equivalence tests + E2E); carried in backups |
 | Vacation mode left on forever | ✅ | Toast once a day after 14 days (E2E) |
-| Very old plants | 🟡 | Leaves/florets capped; garden graduation is post-MVP |
+| Very old plants | ✅ | Potted plant moves to the garden at 6 months and keeps growing there |
 | Browser zoom 50–200 %, narrow windows | ✅ | Found + fixed: at 200 % / short windows the plant panel covered the Yes/No buttons. Left column now stacks (flex); panel starts collapsed on small screens. E2E checks no overlap at 720×450 and 480×820 |
 | `three` bundle parse time | ✅ | `marumado:first-frame` mark. Apple M1 (Metal): 77–120 ms typical, ~1.3 s for the first tab of a browser session (process + shader warm-up). Software GL: 0.9–2.9 s |
 
@@ -110,11 +110,13 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
 | Item | Status |
 |---|---|
-| Garden graduation at 6–12 months, and what comes next | 🟡 | [002 · garden](plans/002-garden.md): decisions taken (G0 ✅); next G1 (lab: garden scene + generation styles) |
+| Garden graduation at 6 months, and what comes next | 🟡 | [002 · garden](plans/002-garden.md): G0–G3 ✅ (engine, terraced garden, ceremony, new seed, backup v2); G4 deck videos pending |
 | Holidays / days off beyond weekends | ⬜ |
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-05: garden built (002 G1–G3): compressed growth (full look at 6 months), terraced garden + bigger window, automatic move with ceremony, new-seed dialog, flower colour in onboarding, backup v2. Bugs #25–26 found on the ceremony screenshots. Explainer video re-rendered. Vitest 46 × 3 TZ, E2E 26/26.
 
 - 2026-10-04: docs reorganised: `docs/README.md` index; plans numbered in `docs/plans/` (001 MVP = done/frozen with known deviations, 002 garden = active).
 

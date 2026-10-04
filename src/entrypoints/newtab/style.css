@@ -896,3 +896,44 @@ select option {
   color: var(--muted);
   font-size: 12px;
 }
+
+/* Flower colour picker (onboarding, new seed) */
+.flowers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.flower {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.flower .swatch {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+}
+
+.flower[aria-checked='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.new-seed .name-input {
+  margin-bottom: 8px;
+}
+
+.new-seed .hero-sprout {
+  margin-bottom: 10px;
+}

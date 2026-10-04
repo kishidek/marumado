@@ -1,8 +1,9 @@
 import { CATALOG } from './catalog';
 import type { Checkpoint } from './model';
-import type { AnswerEvent, Settings } from './types';
+import { FLOWER_COLOURS, type AnswerEvent, type GardenState, type PlantStyle, type Settings } from './types';
 
-export const SCHEMA_VERSION = 1;
+/** 2: adds `garden` (plans/002-garden.md). v1 backups still restore. */
+export const SCHEMA_VERSION = 2;
 
 export interface Backup {
   app: 'marumado';
@@ -12,6 +13,7 @@ export interface Backup {
   events: AnswerEvent[];
   /** Summary of history older than the events (present once the log has been compacted). */
   checkpoint?: Checkpoint | null;
+  garden?: GardenState | null;
   /** Optional local error log (see storage/error-log.ts); ignored on restore. */
   diagnostics?: { ts: number; message: string; version: string }[];
 }
@@ -22,8 +24,21 @@ export function makeBackup(
   now: number,
   diagnostics: Backup['diagnostics'] = [],
   checkpoint: Checkpoint | null = null,
+  garden: GardenState | null = null,
 ): Backup {
-  return { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: now, settings, events, checkpoint, diagnostics };
+  return { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: now, settings, events, checkpoint, garden, diagnostics };
+}
+
+const isStyle = (x: unknown): x is PlantStyle =>
+  isObj(x) && FLOWER_COLOURS.includes(x.flowers as never) && Number.isInteger(x.leaves) && Number.isInteger(x.pot);
+
+function parseGarden(x: unknown): GardenState | null | 'bad' {
+  if (x === undefined || x === null) return null;
+  if (!isObj(x) || !isObj(x.current) || !isStyle(x.current.style) || !isNum(x.current.plantedAt) || !isNum(x.current.startCareDays) || !Array.isArray(x.moved)) return 'bad';
+  const ok = x.moved.every(
+    (m) => isObj(m) && typeof m.id === 'string' && typeof m.name === 'string' && isStyle(m.style) && isNum(m.movedAt) && isNum(m.movedCareDays) && isNum(m.startCareDays),
+  );
+  return ok ? (x as unknown as GardenState) : 'bad';
 }
 
 function parseCheckpoint(x: unknown): Checkpoint | null | 'bad' {
@@ -99,5 +114,7 @@ export function parseBackup(text: string): ParseResult {
   };
   const checkpoint = parseCheckpoint(raw.checkpoint);
   if (checkpoint === 'bad') return { ok: false, error: 'The backup’s history summary is damaged.' };
-  return { ok: true, backup: { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: isNum(raw.exportedAt) ? raw.exportedAt : 0, settings, events, checkpoint } };
+  const garden = parseGarden(raw.garden);
+  if (garden === 'bad') return { ok: false, error: 'The backup’s garden is damaged.' };
+  return { ok: true, backup: { app: 'marumado', schemaVersion: SCHEMA_VERSION, exportedAt: isNum(raw.exportedAt) ? raw.exportedAt : 0, settings, events, checkpoint, garden } };
 }

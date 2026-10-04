@@ -6,7 +6,8 @@ import { cabinetTexture, plasterTexture, shojiTexture, woodTexture } from './tex
  * fixed shōji on both sides, a dark beam above, and a low lacquered counter with sliding
  * cabinet doors. Units are metres; counter top is y = 0, wall plane is z = 0.
  */
-export const MARUMADO = { x: 0.1, y: 0.5, r: 0.42 };
+/** Round window: bigger and lower since the garden (plans/002-garden.md; was r 0.42, y 0.50). */
+export const MARUMADO = { x: 0.1, y: 0.52, r: 0.49 };
 export const PLANT_SPOT = new THREE.Vector3(MARUMADO.x, 0, 0.16);
 
 const PANEL_HALF_W = 0.52;

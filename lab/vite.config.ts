@@ -6,5 +6,5 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   root: resolve(import.meta.dirname, '..'),
   server: { port: 5179, open: '/lab/index.html' },
-  build: { rolldownOptions: { input: resolve(import.meta.dirname, 'index.html') } },
+  build: { rolldownOptions: { input: { lab: resolve(import.meta.dirname, 'index.html'), garden: resolve(import.meta.dirname, 'garden.html') } } },
 });

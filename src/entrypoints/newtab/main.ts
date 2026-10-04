@@ -1,17 +1,45 @@
 import { Settings as SettingsIcon, Sprout } from 'lucide';
 import { catalogHabit, DAILY, questionFor } from '../../engine/catalog';
+import {
+  almostReady,
+  GARDEN,
+  gardenHealth,
+  gardenLook,
+  initialGarden,
+  isGardenTime,
+  lookDays,
+  pottedPlantDays,
+  visibleGarden,
+} from '../../engine/garden';
 import { computeState, potNumber, type Checkpoint, type PlantState } from '../../engine/model';
 import { availability, duePrompts, minutesUntilDue, wouldCount, type Availability } from '../../engine/scheduler';
-import type { Answer, AnswerEvent, HabitSetting, Settings } from '../../engine/types';
-import { buildAjisai } from '../../plant/ajisai';
+import type { Answer, AnswerEvent, GardenState, HabitSetting, PlantStyle, Settings } from '../../engine/types';
+import { buildAjisai, type AjisaiBuild } from '../../plant/ajisai';
 import { skyAt } from '../../scene/sky';
+import * as THREE from 'three';
 import { createGlHost } from '../../scene/gl-host';
 import { createWindowScene } from '../../scene/window-scene';
 import { shiftBack, simulateDays, type Pattern } from '../../engine/simulate';
 import { installErrorLog, logError } from '../../storage/error-log';
-import { appendEvent, backupReminderItem, checkpointItem, compactIfNeeded, vacationReminderItem, clearAll, eventsItem, plant, replaceAll, settingsItem, watchAll } from '../../storage/items';
+import {
+  appendEvent,
+  backupReminderItem,
+  checkpointItem,
+  clearAll,
+  compactIfNeeded,
+  eventsItem,
+  gardenItem,
+  moveToGardenIfDue,
+  nameNewSeed,
+  plant,
+  replaceAll,
+  settingsItem,
+  vacationReminderItem,
+  watchAll,
+} from '../../storage/items';
 import { $, el, icon, ordinal, setBackgroundInert, toast } from '../../ui/dom';
 import { initHelp } from '../../ui/help';
+import { closeNewSeedDialog, newSeedOpen, openNewSeedDialog } from '../../ui/new-seed';
 import { habitIcon } from '../../ui/icons';
 import { openOnboarding } from '../../ui/onboarding';
 import { initSettings, openSettings, refreshSettings, settingsOpen } from '../../ui/settings';
@@ -30,6 +58,11 @@ const preview = {
 let settings: Settings | null = null;
 let events: AnswerEvent[] = [];
 let checkpoint: Checkpoint | null = null;
+let gardenStored: GardenState | null = null;
+/** The garden as stored, or the first generation if nothing has moved yet. */
+const garden = () => gardenStored ?? initialGarden(settings!);
+/** Seed of a generation's plant shape (generation 0 keeps the original seed 7). */
+const seedFor = (generation: number) => 7 + generation * 13;
 let state: PlantState | null = null;
 let loaded = false;
 
@@ -97,13 +130,101 @@ function stepHealth(dt: number): boolean {
 }
 
 let plantKey = '';
+/** Look days of the potted plant: growth since this generation started, compressed (plans/002-garden.md). */
+const pottedLook = () => preview.days ?? (settings && state ? lookDays(pottedPlantDays(garden(), state)) : 0);
+
 function buildPlant() {
-  const days = preview.days ?? state?.plantDays ?? 0;
+  const days = pottedLook();
   const health = shownHealth ?? targetHealth();
-  const key = `${days.toFixed(1)}|${health.toFixed(2)}`;
+  const g = settings ? garden() : null;
+  const style = g?.current.style;
+  const seed = seedFor(g?.moved.length ?? 0);
+  const key = `${days.toFixed(1)}|${health.toFixed(2)}|${JSON.stringify(style)}|${seed}`;
   if (key === plantKey) return;
   plantKey = key;
-  view.setPlant(buildAjisai({ days, health }), days);
+  view.setPlant(buildAjisai({ days, health, style, seed }), days);
+  requestRender();
+}
+
+// --- Garden --------------------------------------------------------------------------------
+/** Garden builds by plant id; rebuilt only when their look or displayed health moves a step. */
+const gardenBuilds = new Map<string, { key: string; build: AjisaiBuild }>();
+/** While the move ceremony runs, the plant that's flying isn't shown in the garden yet. */
+let ceremonyFor: string | null = null;
+/**
+ * Set *before* the move is saved: saving triggers a storage-watch re-render, which must not open
+ * the new-seed dialog over the flight (bug log #25).
+ */
+let moving = false;
+/** Check for a move once per tab open / tab shown, never right after an answer. */
+let gardenCheck = true;
+
+function renderGarden() {
+  if (!settings || !state) {
+    for (const entry of gardenBuilds.values()) entry.build.dispose();
+    gardenBuilds.clear();
+    view.setGarden([]);
+    return;
+  }
+  const health = Math.round(gardenHealth(targetHealth()) * 5) / 5;
+  const g = garden();
+  // During a move the newest garden plant is still in the air (or about to take off).
+  const flying = ceremonyFor ?? (moving ? g.moved.at(-1)?.id : null);
+  let list = visibleGarden(g).filter((x) => x.plant.id !== flying);
+  if (settings.lightMode) list = list.slice(-3);
+  const keep = new Set<string>();
+  const placed = list.map(({ plant, generation, slot }) => {
+    const look = gardenLook(plant, state!);
+    const key = `${Math.round(look / 5)}|${health}`;
+    keep.add(plant.id);
+    let entry = gardenBuilds.get(plant.id);
+    if (!entry || entry.key !== key) {
+      entry?.build.dispose();
+      entry = { key, build: buildAjisai({ days: look, health, style: plant.style, seed: seedFor(generation), potted: false, detail: 'low' }) };
+      gardenBuilds.set(plant.id, entry);
+    }
+    return { build: entry.build, slot };
+  });
+  for (const [id, entry] of gardenBuilds) {
+    if (!keep.has(id)) {
+      entry.build.dispose();
+      gardenBuilds.delete(id);
+    }
+  }
+  view.setGarden(placed);
+  requestRender();
+}
+
+/** Runs the move if it's due: ceremony (flight through the window), then the new-seed dialog. */
+async function maybeMoveToGarden() {
+  if (!settings || !state) return;
+  const before = garden();
+  if (!isGardenTime(before, state) || document.visibilityState !== 'visible') return;
+  const flyerStyle: PlantStyle = before.current.style;
+  const generation = before.moved.length;
+  const flyHealth = shownHealth ?? targetHealth();
+  moving = true;
+  const moved = await moveToGardenIfDue().catch((err: unknown) => {
+    storageFailed(err);
+    return null;
+  });
+  const plantMoved = moved ? (await gardenItem.getValue())?.moved.at(-1) : null;
+  if (!plantMoved || reduceMotion()) {
+    // Not due on the stored data (another tab did it), or no animation wanted.
+    moving = false;
+    render();
+    return;
+  }
+  ceremonyFor = plantMoved.id;
+  renderGarden();
+  const flyer = buildAjisai({ days: GARDEN.fullLook, health: flyHealth, style: flyerStyle, seed: seedFor(generation), potted: false, detail: 'low' });
+  for (const c of flyer.group.children) if (c instanceof THREE.Mesh) c.visible = false; // no mound or shadow in the air
+  view.flyToGarden(flyer, generation % GARDEN.slots, () => {
+    ceremonyFor = null;
+    moving = false;
+    render();
+    view.cheer('sparkle');
+  });
   requestRender();
 }
 
@@ -154,8 +275,13 @@ function statusFor(habit: HabitSetting, now: number, avail: Availability) {
 function renderNeeds(now: number) {
   const s = settings!;
   const avail = availability(s, now);
-  $('plantName').textContent = s.plantName;
-  $('plantMeta').textContent = `Day ${state!.calendarDay} · ${ordinal(potNumber(state!.plantDays))} pot`;
+  const g = garden();
+  $('plantName').textContent = g.pendingSeed ? 'New seed' : s.plantName;
+  const day = Math.round((new Date(now).setHours(12, 0, 0, 0) - new Date(g.current.plantedAt).setHours(12, 0, 0, 0)) / 86_400_000) + 1;
+  const meta = [`Day ${Math.max(1, day)}`, `${ordinal(potNumber(pottedLook()))} pot`];
+  if (almostReady(g, state!)) meta.push('Almost ready for the garden');
+  if (g.moved.length) meta.push(`${g.moved.length} in the garden`);
+  $('plantMeta').textContent = meta.join(' · ');
   $('needsMini').replaceChildren(
     ...s.habits.map((habit) => {
       const low = state!.byId[habit.id]!.health < 0.45;
@@ -295,7 +421,7 @@ function storageFailed(err: unknown) {
 
 async function reload() {
   try {
-    [settings, events, checkpoint] = await Promise.all([settingsItem.getValue(), eventsItem.getValue(), checkpointItem.getValue()]);
+    [settings, events, checkpoint, gardenStored] = await Promise.all([settingsItem.getValue(), eventsItem.getValue(), checkpointItem.getValue(), gardenItem.getValue()]);
   } catch (err) {
     storageFailed(err);
   }
@@ -312,6 +438,9 @@ function render() {
 
   if (!settings) {
     state = null;
+    gardenStored = null;
+    closeNewSeedDialog();
+    renderGarden();
     hideCard();
     $('needs').hidden = true;
     $('openSettings').hidden = true;
@@ -319,8 +448,8 @@ function render() {
     updatePlant();
     tick();
     if ($('onboarding').hidden) {
-      openOnboarding(async (s) => {
-        await plant(s);
+      openOnboarding(async (s, flowers) => {
+        await plant(s, flowers);
         toast(`${s.plantName} is planted. See you on your next tab.`);
       });
     }
@@ -337,11 +466,31 @@ function render() {
   $('openHelp').hidden = false;
   state = computeState(settings, events, now, checkpoint);
   updatePlant();
+  renderGarden();
   renderNeeds(now);
   renderCard(now);
   tick();
   void maybeRemindBackup(now);
   void maybeRemindVacation(now);
+
+  if (gardenCheck && document.visibilityState === 'visible') {
+    gardenCheck = false;
+    void maybeMoveToGarden();
+  }
+  const g = garden();
+  if (g.pendingSeed && !moving && document.visibilityState === 'visible' && !newSeedOpen()) {
+    const movedPlant = g.moved.at(-1);
+    openNewSeedDialog({
+      moved: movedPlant?.name ?? settings.plantName,
+      taken: g.moved.map((m) => m.name),
+      defaultFlowers: g.current.style.flowers,
+      onDone: (name, flowers) => {
+        void nameNewSeed(name, flowers).then(() => toast(`${name} is planted. ${movedPlant?.name ?? 'Your ajisai'} keeps growing in the garden.`));
+      },
+    });
+  } else if (!g.pendingSeed && newSeedOpen()) {
+    closeNewSeedDialog(); // answered in another tab
+  }
 }
 
 /** Vacation mode left on for weeks silently freezes the game: nudge once a day after 14 days. */
@@ -422,10 +571,19 @@ function mountDevControls() {
     b.addEventListener('click', async () => {
       if (!settings) return;
       const now = Date.now();
+      const back = nDays * 86_400_000;
       let st = { settings, events };
-      if (fresh) st = { settings: { ...settings, createdAt: now - nDays * 86_400_000 }, events: [] };
-      else st = shiftBack(st.settings, st.events, nDays);
-      await replaceAll(st.settings, [...st.events, ...simulateDays(st.settings, now, nDays, pattern, now % 1000)]);
+      let g = garden();
+      if (fresh) {
+        st = { settings: { ...settings, createdAt: now - back }, events: [] };
+        g = initialGarden(st.settings, g.current.style.flowers);
+      } else {
+        st = shiftBack(st.settings, st.events, nDays);
+        // The garden moves back in time with the history (plantedAt / movedAt).
+        g = { ...g, current: { ...g.current, plantedAt: g.current.plantedAt - back }, moved: g.moved.map((m) => ({ ...m, plantedAt: m.plantedAt - back, movedAt: m.movedAt - back })) };
+      }
+      await replaceAll(st.settings, [...st.events, ...simulateDays(st.settings, now, nDays, pattern, now % 1000)], null, g);
+      gardenCheck = true; // a simulated 6 months should trigger the move right away
       toast(`Simulated ${nDays} days (${pattern}).`);
     });
     return b;
@@ -438,6 +596,7 @@ function mountDevControls() {
     el('div', { className: 'row' }, cheerWater, cheerSparkle),
     el('label', {}, 'Simulate history'),
     el('div', { className: 'row' }, sim('30 d healthy (fresh)', 30, 'healthy', true), sim('+7 d neglect', 7, 'neglect'), sim('+7 d healthy', 7, 'healthy'), sim('+30 d mixed', 30, 'mixed')),
+    el('div', { className: 'row' }, sim('+6 months healthy (→ garden)', 260, 'healthy')),
   );
 }
 
@@ -468,7 +627,7 @@ if (DEV) {
 installErrorLog();
 $('openSettings').append(icon(SettingsIcon, 20));
 $('openSettings').addEventListener('click', () => openSettings(true));
-initSettings({ getSettings: () => settings, getEvents: () => events, getCheckpoint: () => checkpoint });
+initSettings({ getSettings: () => settings, getEvents: () => events, getCheckpoint: () => checkpoint, getGarden: () => gardenStored });
 initHelp({ plantName: () => settings?.plantName ?? 'your ajisai', reduceMotion: () => !!settings?.reduceMotion, settingsOpen });
 mountDevControls();
 
@@ -478,7 +637,9 @@ requestAnimationFrame(loop);
 
 watchAll(() => void reload());
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') void reload();
+  if (document.visibilityState !== 'visible') return;
+  gardenCheck = true;
+  void reload();
 });
 setInterval(render, 30_000);
 // The plant panel shows itself briefly, then folds into a pill (right away on small screens).

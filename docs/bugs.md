@@ -38,6 +38,8 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 22 | 2026-10-04 | 🟢 | Habits | Daily habits offered sub-daily intervals | Settings review | `e81f7e9` |
 | 23 | 2026-10-04 | 🟠 | Data | "Start over": Cancel on the 2nd confirm meant "erase anyway" | Settings review | `e81f7e9` |
 | 24 | 2026-10-04 | 🟠 | New tab | Question card kept old wording after an interval change | E2E for #21 | `e81f7e9` |
+| 25 | 2026-10-05 | 🟠 | Garden | New-seed dialog opened over the move ceremony | Screenshots of the ceremony | (this commit) |
+| 26 | 2026-10-05 | 🟢 | Garden | The moving plant flashed in its garden slot before taking off | Same review | (this commit) |
 
 ## Details
 
@@ -166,3 +168,15 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 
 ### Smaller improvements from the same review
 Enter saves Rename; exported filenames fall back to `plant` for non-Latin names; focus returns to the gear when Settings closes; removing a habit asks first; adding a habit can't exceed 5 even from two tabs; turning vacation on twice (two tabs) doesn't stack.
+
+### 25. New-seed dialog opened over the move ceremony
+- **Symptom:** the plant's flight through the window was hidden: the dialog appeared ~0.5 s after it started.
+- **Cause:** saving the move triggers a storage-watch re-render; at that moment the page didn't know a ceremony was starting, so it opened the dialog.
+- **Fix:** a `moving` flag is set *before* saving and cleared when the flight lands; the dialog waits for it.
+- **Guard:** visual check of the ceremony (`.output/TEMP - garden-move/`); E2E "garden: at 6 months…" waits for the dialog after the flight.
+
+### 26. The moving plant flashed in the garden before taking off
+- **Symptom:** for a frame the plant was already standing on the hill and also about to fly.
+- **Cause:** same re-render, before the ceremony hid the newest garden plant.
+- **Fix:** while `moving`, the newest garden plant is hidden until it lands.
+- **Guard:** visual check.

@@ -2,7 +2,7 @@ import { ShieldCheck, X } from 'lucide';
 import { makeBackup, parseBackup } from '../engine/backup';
 import { CATALOG, catalogHabit, intervalLabel, intervalOptionsFor, MAX_HABITS, MIN_HABITS } from '../engine/catalog';
 import type { Checkpoint } from '../engine/model';
-import type { AnswerEvent, Settings } from '../engine/types';
+import type { AnswerEvent, GardenState, Settings } from '../engine/types';
 import { clearAll, errorsItem, replaceAll, saveSettings } from '../storage/items';
 import { ask, askOpen } from './ask';
 import { $, el, icon, relativeTime, setBackgroundInert, toast } from './dom';
@@ -13,6 +13,7 @@ interface Ctx {
   getSettings: () => Settings | null;
   getEvents: () => AnswerEvent[];
   getCheckpoint: () => Checkpoint | null;
+  getGarden: () => GardenState | null;
 }
 
 let ctx: Ctx;
@@ -70,10 +71,10 @@ function toggleRow(label: string, sub: string, checked: boolean, onChange: (on: 
   return el('label', { className: 'setting-row' }, el('span', { className: 'grow' }, label, el('small', {}, sub)), input);
 }
 
-export async function downloadBackup(settings: Settings, events: AnswerEvent[], checkpoint: Checkpoint | null) {
+export async function downloadBackup(settings: Settings, events: AnswerEvent[], checkpoint: Checkpoint | null, garden: GardenState | null) {
   const now = Date.now();
   const diagnostics = await errorsItem.getValue().catch(() => []);
-  const blob = new Blob([JSON.stringify(makeBackup(settings, events, now, diagnostics, checkpoint), null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(makeBackup(settings, events, now, diagnostics, checkpoint, garden), null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const date = new Date(now).toISOString().slice(0, 10);
   // Non-Latin names (e.g. kanji) would slug to nothing: fall back to "plant".
@@ -85,7 +86,7 @@ export async function downloadBackup(settings: Settings, events: AnswerEvent[], 
 
 /** Handlers run later than render(): always read the latest settings, never the render-time copy. */
 const current = () => ctx.getSettings()!;
-const backupNow = () => downloadBackup(current(), ctx.getEvents(), ctx.getCheckpoint());
+const backupNow = () => downloadBackup(current(), ctx.getEvents(), ctx.getCheckpoint(), ctx.getGarden());
 
 function render() {
   const s = ctx.getSettings();
@@ -185,7 +186,7 @@ function render() {
       ],
     });
     if (ok !== 'restore') return;
-    await replaceAll(b.settings, b.events, b.checkpoint ?? null);
+    await replaceAll(b.settings, b.events, b.checkpoint ?? null, b.garden ?? null);
     toast(`${b.settings.plantName} is back.`);
   });
   const importBtn = el('button', { type: 'button', className: 'btn' }, 'Restore from file');

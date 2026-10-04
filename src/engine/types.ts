@@ -44,3 +44,32 @@ export interface Settings {
   lightMode?: boolean;
   lastExportAt: number | null;
 }
+
+export type FlowerColour = 'blue' | 'violet' | 'pink' | 'white';
+export const FLOWER_COLOURS: FlowerColour[] = ['blue', 'violet', 'pink', 'white'];
+
+/** Look of one generation (plans/002-garden.md). Indices point into the renderer's palettes. */
+export interface PlantStyle {
+  flowers: FlowerColour;
+  leaves: number;
+  pot: number;
+}
+
+export interface MovedPlant {
+  id: string;
+  name: string;
+  style: PlantStyle;
+  plantedAt: number;
+  movedAt: number;
+  startCareDays: number;
+  movedCareDays: number;
+}
+
+/** Game state of the garden; separate from Settings (preferences). */
+export interface GardenState {
+  current: { style: PlantStyle; plantedAt: number; startCareDays: number };
+  /** Oldest first. */
+  moved: MovedPlant[];
+  /** The new seed hasn't been named yet (new-seed dialog pending). */
+  pendingSeed: boolean;
+}
