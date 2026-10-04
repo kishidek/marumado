@@ -96,27 +96,26 @@ export function openOnboarding(onDone: (s: Settings) => void) {
       paint();
       body.replaceChildren(el('h2', { id: 'obTitle' }, 'Pick your habits'), counter, grid);
     } else if (step === 3) {
+      // Invalid choices are rejected on the spot (the control snaps back), same as in Settings.
       const error = el('p', { className: 'note' });
-      const validate = () => {
-        const bad = hours.start === hours.end ? 'Start and end can’t be the same.' : hours.days.length === 0 ? 'Pick at least one workday.' : '';
-        error.textContent = bad;
-        next.disabled = !!bad;
-      };
       body.replaceChildren(
         el('h2', { id: 'obTitle' }, 'When do you work?'),
         el('p', {}, `Questions only show up during these hours. Outside them, ${name} rests and loses nothing.`),
         hoursPicker(hours, (start, end) => {
+          error.textContent = start === end ? 'Start and end can’t be the same.' : '';
+          if (start === end) return false;
           hours.start = start;
           hours.end = end;
-          validate();
+          return true;
         }),
         daysPicker(hours.days, (days) => {
+          error.textContent = days.length ? '' : 'Keep at least one workday.';
+          if (!days.length) return false;
           hours.days = days;
-          validate();
+          return true;
         }),
         error,
       );
-      validate();
     } else {
       body.replaceChildren(
         el('div', { className: 'hero-sprout' }, icon(ShieldCheck, 32)),

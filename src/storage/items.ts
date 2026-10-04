@@ -1,5 +1,5 @@
 import { storage } from '#imports';
-import { makeCheckpoint, type Checkpoint } from '../engine/model';
+import { changesHistory, freezePast, makeCheckpoint, type Checkpoint } from '../engine/model';
 import type { AnswerEvent, Settings } from '../engine/types';
 
 /**
@@ -33,10 +33,20 @@ export const appendEvent = (e: AnswerEvent) =>
     await eventsItem.setValue(list);
   });
 
+/**
+ * Saves a settings change. If it would reinterpret history (work hours, habits, intervals), the
+ * past is first frozen into a checkpoint with the old settings, so it only applies from today.
+ */
 export const saveSettings = (update: (s: Settings) => Settings) =>
   locked(async () => {
-    const s = await settingsItem.getValue();
-    if (s) await settingsItem.setValue(update(structuredClone(s)));
+    const before = await settingsItem.getValue();
+    if (!before) return;
+    const after = update(structuredClone(before));
+    if (changesHistory(before, after)) {
+      const frozen = freezePast(before, await eventsItem.getValue(), await checkpointItem.getValue(), Date.now());
+      await checkpointItem.setValue(frozen);
+    }
+    await settingsItem.setValue(after);
   });
 
 export const plant = (settings: Settings) =>
@@ -85,7 +95,14 @@ export const compactIfNeeded = (now = Date.now()) =>
     const oldest = Math.min(...events.map((e) => e.ts));
     if (now - oldest < COMPACT_WHEN_OLDER_THAN_DAYS * DAY) return false;
     const previous = await checkpointItem.getValue();
-    const cp = makeCheckpoint(settings, events, now - KEEP_DAYS * DAY, previous);
+    const boundary = now - KEEP_DAYS * DAY;
+    if (previous && previous.untilTs >= boundary - DAY) {
+      // The checkpoint is already past the boundary (a settings change froze it recently):
+      // just drop events it already covers; never move a checkpoint backwards.
+      await eventsItem.setValue(events.filter((e) => e.ts >= boundary - DAY));
+      return true;
+    }
+    const cp = makeCheckpoint(settings, events, boundary, previous);
     const kept = events.filter((e) => e.ts >= cp.untilTs - DAY); // slack: the replay re-filters by day
     await checkpointItem.setValue(cp);
     await eventsItem.setValue(kept);

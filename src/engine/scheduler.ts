@@ -1,12 +1,12 @@
 import { DAILY } from './catalog';
-import { onVacation, TUNING, type HabitState, type PlantState } from './model';
+import { TUNING, vacationAt, type HabitState, type PlantState } from './model';
 import { isWorkTime, MINUTE } from './time';
 import type { HabitSetting, Settings } from './types';
 
 export type Availability = 'working' | 'off-hours' | 'vacation';
 
 export function availability(settings: Settings, now: number): Availability {
-  if (onVacation(settings, new Date(now))) return 'vacation';
+  if (vacationAt(settings, now)) return 'vacation';
   return isWorkTime(now, settings.workHours) ? 'working' : 'off-hours';
 }
 

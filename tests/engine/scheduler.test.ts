@@ -49,3 +49,15 @@ describe('duePrompts', () => {
     expect(due([], at(6, 10), s)).toEqual([]);
   });
 });
+
+describe('question wording (bug log #21–22)', () => {
+  it('matches the interval the user picked', async () => {
+    const { questionFor, intervalOptionsFor } = await import('../../src/engine/catalog');
+    expect(questionFor('water', 120)).toBe('Did you drink water in the last 2 hours?');
+    expect(questionFor('water', 30)).toBe('Did you drink water in the last 30 minutes?');
+    expect(questionFor('stretch', 60)).toBe('Did you stand up or stretch in the last hour?');
+    expect(questionFor('water', 1440)).toBe('Did you drink water today?');
+    expect(intervalOptionsFor('shutdown')).toEqual([1440]);
+    expect(intervalOptionsFor('water').length).toBeGreaterThan(1);
+  });
+});

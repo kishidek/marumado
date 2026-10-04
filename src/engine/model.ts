@@ -1,5 +1,5 @@
 import { DAILY } from './catalog';
-import { dateKey, isWorkday, MINUTE, shiftDate, shiftDatesBetween, shiftKey } from './time';
+import { dateKey, isWorkday, MINUTE, shiftDate, shiftDatesBetween, shiftEndTs, shiftKey } from './time';
 import type { Answer, AnswerEvent, HabitSetting, Settings, WorkHours } from './types';
 
 /** Every number that shapes the game, in one place. */
@@ -54,9 +54,17 @@ export function isCounted(last: number | null, habit: HabitSetting, ts: number, 
   return ts - last >= habit.intervalMin * MINUTE * TUNING.countWindow;
 }
 
-export function onVacation(settings: Settings, d: Date): boolean {
-  const key = dateKey(d);
-  return settings.vacations.some((v) => dateKey(new Date(v.from)) <= key && (v.to === null || key <= dateKey(new Date(v.to))));
+/** Vacation mode is on at this exact moment (turning it off takes effect immediately). */
+export function vacationAt(settings: Settings, ts: number): boolean {
+  return settings.vacations.some((v) => v.from <= ts && (v.to === null || ts < v.to));
+}
+
+/**
+ * A workday is a vacation day if vacation was on when that day's work ended, which is when an
+ * ignored day would be judged. Turning vacation off in the morning makes that day a normal one.
+ */
+export function vacationDay(settings: Settings, day: Date): boolean {
+  return vacationAt(settings, shiftEndTs(day, settings.workHours));
 }
 
 /**
@@ -129,12 +137,13 @@ function replay(settings: Settings, events: AnswerEvent[], now: number, from: Ch
 
     if (isToday) for (const id of counted) byId[id]!.countedToday = true;
 
-    const workday = isWorkday(day, wh) && !onVacation(settings, day);
-    if (!workday) continue;
+    if (!isWorkday(day, wh)) continue;
     // Only habits that already existed that day count (a habit added later starts fresh).
     const existing = habits.filter((h) => addedKey.get(h.id)! <= key);
+    // Care earned counts even on a vacation day ("nothing is lost"); only penalties are skipped.
     if (existing.length && yes.size > existing.length / 2) careDays++;
-    if (isToday || key === plantedKey) continue; // today isn't over; planting day is a grace day
+    // No penalties: today isn't over; planting day is a grace day; vacation days are free.
+    if (isToday || key === plantedKey || vacationDay(settings, day)) continue;
 
     absence = counted.size === 0 ? absence + 1 : 0;
     if (absence > TUNING.maxAbsenceDays) continue; // dormant: stop losing health
@@ -193,3 +202,20 @@ export function makeCheckpoint(settings: Settings, events: AnswerEvent[], untilT
 export const potNumber = (plantDays: number) => [40, 150, 290].filter((d) => plantDays >= d).length + 1;
 
 export { shiftDate };
+
+/** Settings whose change would make the replay reinterpret the past. */
+export function changesHistory(before: Settings, after: Settings): boolean {
+  const shape = (s: Settings) => JSON.stringify([s.workHours, s.habits.map((h) => [h.id, h.intervalMin])]);
+  return shape(before) !== shape(after);
+}
+
+/**
+ * Settings apply from today on, never retroactively: every day before today is folded into a
+ * checkpoint computed with the *old* settings. (Changing work hours, an interval or the habit
+ * list used to rewrite the plant's past.)
+ */
+export function freezePast(before: Settings, events: AnswerEvent[], checkpoint: Checkpoint | null, now: number): Checkpoint | null {
+  const cp = makeCheckpoint(before, events, now, checkpoint);
+  if (checkpoint && cp.untilKey < checkpoint.untilKey) return checkpoint; // clock went backwards
+  return cp;
+}

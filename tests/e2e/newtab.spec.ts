@@ -74,8 +74,8 @@ test('export → restore round-trips; a corrupt file changes nothing', async ({ 
   await page.keyboard.press('Escape');
   await seed(page, { plantName: 'Other' });
   await page.click('#openSettings');
-  page.once('dialog', (d) => d.accept());
   await page.locator('#settingsBody input[type=file]').setInputFiles(file);
+  await page.click('dialog.ask-dialog button:has-text("Restore")');
   await expect(page.locator('#plantName')).toHaveText('Mizu');
   await expect.poll(() => storedEvents(page)).toBe(1);
 
@@ -92,8 +92,8 @@ test('start over erases the plant and brings back onboarding in every tab', asyn
   const b = await newTab(context);
   await a.bringToFront();
   await a.click('#openSettings');
-  a.on('dialog', (d) => (d.message().startsWith('Start over') ? d.accept() : d.dismiss()));
   await a.click("button:has-text('Start over')");
+  await a.click('dialog.ask-dialog button:has-text("Erase without backup")');
   await expect(a.locator('#onboarding')).toBeVisible();
   await expect(b.locator('#onboarding')).toBeVisible();
 });
@@ -262,4 +262,98 @@ test('light mode rebuilds the 3D context without antialiasing', async ({ context
   await page.locator('label.setting-row', { hasText: 'Light mode' }).locator('input').check();
   await expect.poll(antialias).toBe(false);
   await expect(page.locator('#scene')).toHaveAttribute('data-gl', 'ready');
+});
+
+// --- Settings review regressions (bug log #17–23) -------------------------------------------
+
+test('#18 the Settings drawer shows the saved habit list right away (remove / add)', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page);
+  await page.click('#openSettings');
+  const rows = page.locator('#settingsBody .setting-row select');
+  await expect(rows).toHaveCount(3);
+  await page.locator('#settingsBody .setting-row', { hasText: 'Eye break' }).locator('button:has-text("Remove")').click();
+  await page.click('dialog.ask-dialog button:has-text("Remove")');
+  await expect(rows).toHaveCount(2);
+  await page.click('#settingsBody button.chip:has-text("Walk")');
+  await expect(rows).toHaveCount(3);
+  await expect(page.locator('#settingsBody')).toContainText('Walk');
+});
+
+test('#17 turning vacation off brings questions back immediately', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page);
+  await page.click('#openSettings');
+  const toggle = page.locator('label.setting-row', { hasText: 'Vacation mode' }).locator('input');
+  await toggle.check();
+  await expect(page.locator('#greeting')).toContainText('time off');
+  await toggle.uncheck();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#greeting')).not.toContainText('time off');
+  await expect(page.locator('#ask h3')).toBeVisible();
+});
+
+test('#20 a rejected workday toggle snaps back to what is saved', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page, { workHours: { start: '00:00', end: '23:59', days: [1] } });
+  await page.click('#openSettings');
+  const mon = page.locator('#settingsBody .days[role=group] button:has-text("Mon")');
+  await mon.click();
+  await expect(page.locator('#settingsBody')).toContainText('Keep at least one workday.');
+  await expect(mon).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('#21–22 questions follow the interval; daily-only habits offer only "Once a day"', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page, { habits: [{ id: 'water', intervalMin: 120 }, { id: 'shutdown', intervalMin: 1440 }] });
+  await expect(page.locator('#ask h3')).toHaveText(/in the last 2 hours|on time yesterday/);
+  await page.click('#openSettings');
+  await page.locator('select[aria-label="Water interval"]').selectOption('30');
+  await expect(page.locator('select[aria-label="Shutdown interval"]')).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await page.hover('#needs');
+  await page.click('.need:has-text("Water")');
+  await expect(page.locator('#ask h3')).toHaveText('Did you drink water in the last 30 minutes?');
+});
+
+test('#23 Start over: Cancel keeps the plant; nothing is erased by mistake', async ({ context }) => {
+  const page = await newTab(context);
+  await seed(page, { plantName: 'Kiko' });
+  await page.click('#openSettings');
+  await page.click("button:has-text('Start over')");
+  await page.click('dialog.ask-dialog button:has-text("Cancel")');
+  await expect(page.locator('dialog.ask-dialog')).toHaveCount(0);
+  await expect(page.locator('#plantName')).toHaveText('Kiko');
+  await page.click("button:has-text('Start over')");
+  await page.keyboard.press('Escape'); // closes only the dialog
+  await expect(page.locator('#settings')).toBeVisible();
+  await expect(page.locator('#plantName')).toHaveText('Kiko');
+});
+
+test('#14 changing workdays in Settings does not rewrite the plant’s past', async ({ context }) => {
+  const { simulateDays } = await import('../../src/engine/simulate');
+  const DAY = 86_400_000;
+  const now = Date.now();
+  const s = {
+    plantName: 'Aoi',
+    habits: [{ id: 'water', intervalMin: 120 }, { id: 'stretch', intervalMin: 60 }, { id: 'eyes', intervalMin: 30 }],
+    workHours: { start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5] },
+    createdAt: now - 21 * DAY,
+    vacations: [],
+    reduceMotion: false,
+    lastExportAt: now,
+  };
+  const page = await newTab(context);
+  await page.evaluate((data) => chrome.storage.local.set(data), { settings: s, events: simulateDays(s, now, 21, 'healthy', 4) });
+  await page.reload();
+  const meters = () => page.locator('.meter i').evaluateAll((els) => els.map((e) => (e as HTMLElement).style.width));
+  const before = await meters();
+  await page.click('#openSettings');
+  await page.click('#settingsBody .days[role=group] button:has-text("Sat")');
+  await page.click('#settingsBody .days[role=group] button:has-text("Sun")');
+  await expect.poll(() => page.evaluate(() => chrome.storage.local.get('settings').then((r) => (r.settings as { workHours: { days: number[] } }).workHours.days.length))).toBe(7);
+  await page.keyboard.press('Escape');
+  await page.reload();
+  expect(await meters()).toEqual(before);
+  expect(await page.evaluate(() => chrome.storage.local.get('checkpoint').then((r) => !!r.checkpoint))).toBe(true);
 });

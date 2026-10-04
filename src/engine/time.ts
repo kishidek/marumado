@@ -54,12 +54,22 @@ export function shiftDatesBetween(fromTs: number, toTs: number, wh: WorkHours): 
   const out: Date[] = [];
   const d = shiftDate(fromTs, wh);
   const last = dateKey(shiftDate(toTs, wh));
+  if (dateKey(d) > last) return out; // start after end (clock went backwards): nothing to walk
   for (let guard = 0; guard < 20_000; guard++) {
     out.push(new Date(d));
     if (dateKey(d) === last) break;
     d.setDate(d.getDate() + 1);
   }
   return out;
+}
+
+/** When that shift day's work ends (epoch ms): the moment an ignored day is judged. */
+export function shiftEndTs(day: Date, wh: WorkHours): number {
+  const start = parseHM(wh.start);
+  const length = (parseHM(wh.end) - start + 1440) % 1440 || 1440;
+  const d = new Date(day);
+  d.setHours(0, start + length, 0, 0); // minutes past 59 roll over into hours/days
+  return d.getTime();
 }
 
 /** Next moment work time starts, as "HH:MM" (for "Resting until 09:00"). */

@@ -11,16 +11,35 @@ const WEEK = [
   { d: 0, label: 'Sun' },
 ];
 
-export function hoursPicker(wh: Pick<WorkHours, 'start' | 'end'>, onChange: (start: string, end: string) => void) {
+/**
+ * Start/end time inputs. `onChange` returns false to reject a value; the inputs then snap back
+ * to the last accepted one, so what's shown always matches what's saved. An end before the start
+ * is an overnight shift, and the hint says so.
+ */
+export function hoursPicker(wh: Pick<WorkHours, 'start' | 'end'>, onChange: (start: string, end: string) => boolean) {
   const start = el('input', { type: 'time', value: wh.start, ariaLabel: 'Work starts' });
   const end = el('input', { type: 'time', value: wh.end, ariaLabel: 'Work ends' });
-  const emit = () => start.value && end.value && onChange(start.value, end.value);
+  const hint = el('p', { className: 'hours-hint' });
+  let accepted = { start: wh.start, end: wh.end };
+  const paintHint = () => (hint.textContent = accepted.end < accepted.start ? `Overnight shift: ends at ${accepted.end} the next morning.` : '');
+  const emit = () => {
+    if (!start.value || !end.value) return;
+    if (onChange(start.value, end.value)) {
+      accepted = { start: start.value, end: end.value };
+    } else {
+      start.value = accepted.start;
+      end.value = accepted.end;
+    }
+    paintHint();
+  };
   start.addEventListener('change', emit);
   end.addEventListener('change', emit);
-  return el('div', { className: 'hours' }, start, '→', end);
+  paintHint();
+  return el('div', {}, el('div', { className: 'hours' }, start, '→', end), hint);
 }
 
-export function daysPicker(days: number[], onChange: (days: number[]) => void) {
+/** Weekday toggles. `onChange` returns false to reject (e.g. no days left); the toggle then reverts. */
+export function daysPicker(days: number[], onChange: (days: number[]) => boolean) {
   const current = new Set(days);
   return el(
     'div',
@@ -29,10 +48,14 @@ export function daysPicker(days: number[], onChange: (days: number[]) => void) {
       const b = el('button', { type: 'button' }, label);
       b.setAttribute('aria-pressed', String(current.has(d)));
       b.addEventListener('click', () => {
-        if (current.has(d)) current.delete(d);
+        const had = current.has(d);
+        if (had) current.delete(d);
         else current.add(d);
+        if (!onChange([...current].sort())) {
+          if (had) current.add(d);
+          else current.delete(d);
+        }
         b.setAttribute('aria-pressed', String(current.has(d)));
-        onChange([...current].sort());
       });
       return b;
     }),

@@ -1,9 +1,10 @@
 import { ShieldCheck, X } from 'lucide';
 import { makeBackup, parseBackup } from '../engine/backup';
-import { CATALOG, catalogHabit, INTERVAL_OPTIONS, intervalLabel, MAX_HABITS, MIN_HABITS } from '../engine/catalog';
+import { CATALOG, catalogHabit, intervalLabel, intervalOptionsFor, MAX_HABITS, MIN_HABITS } from '../engine/catalog';
 import type { Checkpoint } from '../engine/model';
 import type { AnswerEvent, Settings } from '../engine/types';
 import { clearAll, errorsItem, replaceAll, saveSettings } from '../storage/items';
+import { ask, askOpen } from './ask';
 import { $, el, icon, relativeTime, setBackgroundInert, toast } from './dom';
 import { habitIcon } from './icons';
 import { daysPicker, hoursPicker } from './pickers';
@@ -23,19 +24,45 @@ export function initSettings(c: Ctx) {
   close.addEventListener('click', () => openSettings(false));
   $('settingsScrim').addEventListener('click', () => openSettings(false));
   addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') openSettings(false);
+    if (e.key === 'Escape' && !askOpen()) openSettings(false);
+  });
+  // A refresh skipped while the user was typing runs once they leave the field.
+  $('settings').addEventListener('focusout', () => {
+    if (pendingRefresh) queueMicrotask(refreshSettings);
   });
 }
 
 export function openSettings(open: boolean) {
+  const wasOpen = settingsOpen();
   if (open) render();
   $('settings').hidden = !open;
   $('settingsScrim').hidden = !open;
   setBackgroundInert(open || !$('onboarding').hidden); // onboarding may have opened underneath (start over)
   if (open) $('settings').querySelector<HTMLElement>('[data-close]')!.focus();
+  else if (wasOpen && !$('openSettings').hidden) $('openSettings').focus(); // give focus back to the gear
 }
 
 export const settingsOpen = () => !$('settings').hidden;
+
+let pendingRefresh = false;
+
+/**
+ * Called whenever stored data changes (this tab or another). Re-renders the open drawer so it
+ * always shows what's saved, except while the user is typing in it (that refresh waits for blur).
+ */
+export function refreshSettings() {
+  if (!settingsOpen()) return;
+  const active = document.activeElement;
+  if (active instanceof HTMLInputElement && (active.type === 'text' || active.type === 'time') && $('settings').contains(active)) {
+    pendingRefresh = true;
+    return;
+  }
+  pendingRefresh = false;
+  const body = $('settingsBody');
+  const scroll = body.scrollTop;
+  render();
+  body.scrollTop = scroll;
+}
 
 function toggleRow(label: string, sub: string, checked: boolean, onChange: (on: boolean) => void) {
   const input = el('input', { type: 'checkbox', checked });
@@ -49,82 +76,93 @@ export async function downloadBackup(settings: Settings, events: AnswerEvent[], 
   const blob = new Blob([JSON.stringify(makeBackup(settings, events, now, diagnostics, checkpoint), null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const date = new Date(now).toISOString().slice(0, 10);
-  const a = el('a', { href: url, download: `marumado-${settings.plantName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${date}.json` });
-  a.click();
+  // Non-Latin names (e.g. kanji) would slug to nothing: fall back to "plant".
+  const slug = settings.plantName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'plant';
+  el('a', { href: url, download: `marumado-${slug}-${date}.json` }).click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  void saveSettings((s) => ({ ...s, lastExportAt: now }));
+  await saveSettings((s) => ({ ...s, lastExportAt: now }));
 }
 
 /** Handlers run later than render(): always read the latest settings, never the render-time copy. */
 const current = () => ctx.getSettings()!;
+const backupNow = () => downloadBackup(current(), ctx.getEvents(), ctx.getCheckpoint());
 
 function render() {
   const s = ctx.getSettings();
   if (!s) return;
   const active = s.habits;
 
-  // --- Your plant
+  // --- Your plant (Enter or the button saves)
   const nameInput = el('input', { type: 'text', className: 'rename-input', value: s.plantName, maxLength: 24, ariaLabel: 'Plant name' });
   const renameBtn = el('button', { type: 'button', className: 'btn' }, 'Rename');
-  renameBtn.addEventListener('click', async () => {
+  const rename = async () => {
     const name = nameInput.value.trim();
     if (!name || name === current().plantName) return;
     await saveSettings((x) => ({ ...x, plantName: name }));
     toast(`Your plant is now called ${name}.`);
-  });
+  };
+  renameBtn.addEventListener('click', () => void rename());
+  nameInput.addEventListener('keydown', (e) => e.key === 'Enter' && void rename());
 
-  // --- Habits
+  // --- Habits (the drawer re-renders itself when the saved list changes)
   const habitRows = active.map((h) => {
     const meta = catalogHabit(h.id)!;
+    const options = intervalOptionsFor(h.id);
     const select = el(
       'select',
-      { ariaLabel: `${meta.name} interval` },
-      ...INTERVAL_OPTIONS.map((m) => el('option', { value: String(m), selected: m === h.intervalMin }, intervalLabel(m))),
+      { ariaLabel: `${meta.name} interval`, disabled: options.length === 1 },
+      ...options.map((m) => el('option', { value: String(m), selected: m === h.intervalMin }, intervalLabel(m))),
     );
     select.addEventListener('change', () =>
       saveSettings((x) => ({ ...x, habits: x.habits.map((y) => (y.id === h.id ? { ...y, intervalMin: Number(select.value) } : y)) })),
     );
     const remove = el('button', { type: 'button', className: 'btn ghost', disabled: active.length <= MIN_HABITS }, 'Remove');
     remove.addEventListener('click', async () => {
-      await saveSettings((x) => ({ ...x, habits: x.habits.filter((y) => y.id !== h.id) }));
-      render();
+      const ok = await ask({
+        title: `Remove ${meta.name}?`,
+        body: 'Its progress so far stays in your plant. If you add it back later, it starts fresh.',
+        actions: [
+          { label: 'Cancel', value: 'cancel', kind: 'ghost' },
+          { label: 'Remove', value: 'remove', kind: 'danger' },
+        ],
+      });
+      if (ok === 'remove') await saveSettings((x) => ({ ...x, habits: x.habits.filter((y) => y.id !== h.id) }));
     });
     return el('div', { className: 'setting-row' }, icon(habitIcon(h.id), 20), el('span', { className: 'grow' }, meta.name, el('small', {}, meta.plantPart)), select, remove);
   });
   const addable = CATALOG.filter((c) => !active.some((h) => h.id === c.id));
   const addChips = addable.map((c) => {
     const b = el('button', { type: 'button', className: 'chip', disabled: active.length >= MAX_HABITS }, `+ ${c.name}`);
-    b.addEventListener('click', async () => {
-      await saveSettings((x) => ({ ...x, habits: [...x.habits, { id: c.id, intervalMin: c.defaultIntervalMin, addedAt: Date.now() }] }));
-      render();
-    });
+    b.addEventListener('click', () =>
+      saveSettings((x) =>
+        x.habits.length >= MAX_HABITS || x.habits.some((y) => y.id === c.id)
+          ? x
+          : { ...x, habits: [...x.habits, { id: c.id, intervalMin: c.defaultIntervalMin, addedAt: Date.now() }] },
+      ),
+    );
     return b;
   });
 
-  // --- Work hours
+  // --- Work hours (invalid input is rejected and the control snaps back)
   const hoursError = el('p', { className: 'note' });
   const hours = hoursPicker(s.workHours, (start, end) => {
-    if (start === end) {
-      hoursError.textContent = 'Start and end can’t be the same.';
-      return;
-    }
-    hoursError.textContent = '';
+    hoursError.textContent = start === end ? 'Start and end can’t be the same.' : '';
+    if (start === end) return false;
     void saveSettings((x) => ({ ...x, workHours: { ...x.workHours, start, end } }));
+    return true;
   });
   const days = daysPicker(s.workHours.days, (d) => {
-    if (d.length === 0) {
-      hoursError.textContent = 'Keep at least one workday.';
-      return;
-    }
-    hoursError.textContent = '';
+    hoursError.textContent = d.length ? '' : 'Keep at least one workday.';
+    if (!d.length) return false;
     void saveSettings((x) => ({ ...x, workHours: { ...x.workHours, days: d } }));
+    return true;
   });
 
   // --- Data
   const onVacation = s.vacations.some((v) => v.to === null);
   const exportBtn = el('button', { type: 'button', className: 'btn primary' }, 'Export backup');
   exportBtn.addEventListener('click', async () => {
-    await downloadBackup(current(), ctx.getEvents(), ctx.getCheckpoint());
+    await backupNow();
     toast('Backup downloaded.');
   });
   const file = el('input', { type: 'file', accept: 'application/json,.json', hidden: true });
@@ -138,18 +176,36 @@ function render() {
       return;
     }
     const b = parsed.backup;
-    if (!confirm(`Replace ${current().plantName} with ${b.settings.plantName} from this backup (${b.events.length} answers)?`)) return;
+    const ok = await ask({
+      title: `Restore ${b.settings.plantName}?`,
+      body: `This replaces ${current().plantName} with the backup (${b.events.length} answers). Export ${current().plantName} first if you want to keep it.`,
+      actions: [
+        { label: 'Cancel', value: 'cancel', kind: 'ghost' },
+        { label: 'Restore', value: 'restore', kind: 'primary' },
+      ],
+    });
+    if (ok !== 'restore') return;
     await replaceAll(b.settings, b.events, b.checkpoint ?? null);
     toast(`${b.settings.plantName} is back.`);
-    render();
   });
   const importBtn = el('button', { type: 'button', className: 'btn' }, 'Restore from file');
   importBtn.addEventListener('click', () => file.click());
+
+  // One dialog with explicit choices (two confirm()s made "Cancel" mean "erase anyway").
   const startOver = el('button', { type: 'button', className: 'btn danger' }, 'Start over…');
   startOver.addEventListener('click', async () => {
-    const cur = current();
-    if (!confirm(`Start over with a new seed?\n\n${cur.plantName}'s history will be erased from this browser.`)) return;
-    if (confirm('Download a backup of the current plant first?')) await downloadBackup(cur, ctx.getEvents(), ctx.getCheckpoint());
+    const name = current().plantName;
+    const choice = await ask({
+      title: 'Start over with a new seed?',
+      body: `${name}'s history will be erased from this browser. This can't be undone.`,
+      actions: [
+        { label: 'Cancel', value: 'cancel', kind: 'ghost' },
+        { label: 'Erase without backup', value: 'erase', kind: 'danger' },
+        { label: 'Download backup & erase', value: 'backup', kind: 'primary' },
+      ],
+    });
+    if (choice !== 'erase' && choice !== 'backup') return;
+    if (choice === 'backup') await backupNow();
     await clearAll();
     openSettings(false);
   });
@@ -162,6 +218,7 @@ function render() {
     el('h3', {}, `Habits · ${active.length} of ${MAX_HABITS}`),
     ...habitRows,
     ...(addable.length ? [el('p', { className: 'note' }, active.length >= MAX_HABITS ? 'Remove one to add another.' : `Add one (${MAX_HABITS - active.length} left):`), el('div', { className: 'days' }, ...addChips)] : []),
+    el('p', { className: 'note' }, 'Changes apply from today on. Past days keep the settings they had.'),
 
     el('h3', {}, 'Work hours'),
     hours,
@@ -173,7 +230,11 @@ function render() {
     toggleRow('Vacation mode', 'Pause questions and health while you’re away.', onVacation, (on) =>
       saveSettings((x) => ({
         ...x,
-        vacations: on ? [...x.vacations, { from: Date.now(), to: null }] : x.vacations.map((v) => (v.to === null ? { ...v, to: Date.now() } : v)),
+        vacations: on
+          ? x.vacations.some((v) => v.to === null) // already on (e.g. from another tab)
+            ? x.vacations
+            : [...x.vacations, { from: Date.now(), to: null }]
+          : x.vacations.map((v) => (v.to === null ? { ...v, to: Date.now() } : v)),
       })),
     ),
 

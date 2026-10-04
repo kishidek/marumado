@@ -857,3 +857,42 @@ select option {
   white-space: nowrap;
   vertical-align: bottom;
 }
+
+/* ask() dialogs (ui/ask.ts) */
+.ask-dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--glass-strong);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+}
+
+.ask-dialog::backdrop {
+  background: rgba(12, 14, 26, 0.4);
+  backdrop-filter: blur(3px);
+}
+
+.ask-dialog h2 {
+  margin: 0 0 8px;
+  font: 600 21px var(--serif);
+}
+
+.ask-dialog p {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+.ask-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hours-hint {
+  margin: -6px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+}

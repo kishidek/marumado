@@ -1,4 +1,5 @@
 import { CircleHelp, X } from 'lucide';
+import { askOpen } from './ask';
 import { $, el, icon, setBackgroundInert } from './dom';
 
 /** "How Marumado works": a short explainer with a looping render of the plant's ages and moods. */
@@ -38,5 +39,5 @@ export function initHelp(opts: { plantName: () => string; reduceMotion: () => bo
   $('openHelp').addEventListener('click', open);
   $('closeHelp').addEventListener('click', close);
   wrap.addEventListener('click', (e) => e.target === wrap && close());
-  addEventListener('keydown', (e) => e.key === 'Escape' && close());
+  addEventListener('keydown', (e) => e.key === 'Escape' && !askOpen() && close());
 }

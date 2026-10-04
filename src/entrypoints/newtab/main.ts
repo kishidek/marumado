@@ -1,5 +1,5 @@
 import { Settings as SettingsIcon, Sprout } from 'lucide';
-import { catalogHabit, DAILY } from '../../engine/catalog';
+import { catalogHabit, DAILY, questionFor } from '../../engine/catalog';
 import { computeState, potNumber, type Checkpoint, type PlantState } from '../../engine/model';
 import { availability, duePrompts, minutesUntilDue, wouldCount, type Availability } from '../../engine/scheduler';
 import type { Answer, AnswerEvent, HabitSetting, Settings } from '../../engine/types';
@@ -14,7 +14,7 @@ import { $, el, icon, ordinal, setBackgroundInert, toast } from '../../ui/dom';
 import { initHelp } from '../../ui/help';
 import { habitIcon } from '../../ui/icons';
 import { openOnboarding } from '../../ui/onboarding';
-import { initSettings, openSettings, settingsOpen } from '../../ui/settings';
+import { initSettings, openSettings, refreshSettings, settingsOpen } from '../../ui/settings';
 import './style.css';
 
 const DEV = import.meta.env.DEV;
@@ -188,15 +188,16 @@ function renderNeeds(now: number) {
 
 // --- Question card -----------------------------------------------------------------------
 let forcedHabit: string | null = null;
-let cardHabit: string | null = null;
+/** What the card currently shows; it re-renders only when this changes (no flicker on every tick). */
+let cardKey: string | null = null;
 let showingDone = false;
 let doneTimer = 0;
 
-function setCard(children: Node[], habitId: string | null) {
+function setCard(children: Node[], key: string | null) {
   const card = $('ask');
   card.classList.remove('gone', 'done');
-  if (habitId === cardHabit && card.childElementCount) return;
-  cardHabit = habitId;
+  if (key === cardKey && card.childElementCount) return;
+  cardKey = key;
   card.classList.add('leaving');
   setTimeout(() => {
     card.replaceChildren(...children);
@@ -205,7 +206,7 @@ function setCard(children: Node[], habitId: string | null) {
 }
 
 function hideCard() {
-  cardHabit = null;
+  cardKey = null;
   $('ask').classList.add('gone');
 }
 
@@ -221,7 +222,7 @@ function questionCard(habitId: string) {
   const every = habit.intervalMin >= DAILY ? 'once a day' : `every ${habit.intervalMin < 60 ? `${habit.intervalMin} min` : `${habit.intervalMin / 60} h`}`;
   return [
     el('div', { className: 'ask-head' }, el('span', { className: 'ask-icon' }, icon(habitIcon(habitId), 18)), el('p', { className: 'ask-eyebrow' }, `${meta.name} · ${every}`)),
-    el('h3', {}, meta.question),
+    el('h3', {}, questionFor(habitId, habit.intervalMin)),
     el('p', { className: 'hint' }, low ? meta.lowHint : meta.plantPart),
     el('div', { className: 'ask-actions' }, ...buttons),
   ];
@@ -232,7 +233,9 @@ function renderCard(now: number) {
   if (queue[0]) {
     showingDone = false;
     clearTimeout(doneTimer);
-    setCard(questionCard(queue[0]), queue[0]);
+    // The key covers everything the card shows: habit, interval (question wording) and low hint.
+    const habit = settings!.habits.find((h) => h.id === queue[0])!;
+    setCard(questionCard(queue[0]), `${queue[0]}|${habit.intervalMin}|${state!.byId[queue[0]]!.health < 0.5}`);
   } else if (!showingDone) {
     hideCard();
   }
@@ -298,6 +301,7 @@ async function reload() {
   }
   loaded = true;
   render();
+  refreshSettings(); // keep an open Settings drawer in sync with what's saved
 }
 
 function render() {
