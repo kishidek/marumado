@@ -15,7 +15,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
 | Bugs | 24 fixed · 0 open |
 | Tests | Vitest 37 (× 3 time zones) · Playwright E2E 23 |
-| Left | Post-MVP only: garden graduation, holidays, mood / caffeine habits |
+| Left | Post-MVP only: garden graduation (planning, [garden-plan.md](garden-plan.md)), holidays, mood / caffeine habits |
 
 ## Phases
 
@@ -110,11 +110,15 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
 | Item | Status |
 |---|---|
-| Garden graduation at 6–12 months, and what comes next | ⬜ |
+| Garden graduation at 6–12 months, and what comes next | 🟡 | [garden-plan.md](garden-plan.md): decisions taken (G0 ✅); next G1 (lab: garden scene + generation styles) |
 | Holidays / days off beyond weekends | ⬜ |
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-04: garden decisions: automatic at 6 months; new pot + new seed with a different leaf green; user picks flower colour; garden reacts softly to current health.
+
+- 2026-10-04: garden graduation plan drafted (`docs/garden-plan.md`); scene geometry checked: the garden fits in the lower half of the round window, ~2–9 m out.
 
 - 2026-10-04: docs pass: tracker summary added; plan status, decisions and §6 brought up to date.
 
