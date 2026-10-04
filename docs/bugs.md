@@ -1,30 +1,10 @@
 # Bug log
 
-Every bug found so far, oldest first: **open** ones first, then the fixed ones. Each fixed entry says how it showed up, why it happened, what fixed it and what now guards against it coming back.
+Every bug found so far: **open** ones first, then the fixed ones (oldest first). Each fixed entry says how it showed up, why it happened, what fixed it and what now guards against it coming back.
 
 ## Open
 
-Found in the Settings review (2026-10-04). Not fixed yet.
-
-| # | Sev. | Area | Bug | Evidence |
-|---|---|---|---|---|
-| 14 | 🔴 | Engine / Settings | Changing work hours or workdays rewrites the past: switching Mon–Fri → 7 days drops health 1.00 → 0.76 instantly (past weekends become ignored workdays) | Vitest probe |
-| 15 | 🔴 | Engine / Settings | Changing a habit's interval re-reads old answers: the same three "Not yet" give 0.29 at 30 min but 0.63 at 2 h | Vitest probe |
-| 16 | 🔴 | Engine / Settings | Removing an unanswered habit makes the plant grow instantly: past care days 0 → 5 (the "more than half" bar is recomputed with fewer habits). Exploitable | Vitest probe |
-| 17 | 🔴 | Engine / Vacation | Turning vacation off brings no questions back until tomorrow; greeting still says "Enjoy your time off" and today can't be a care day (`onVacation` compares whole days, not times) | E2E probe |
-| 18 | 🟠 | Settings UI | The drawer lags one step: after "Remove" the habit stays listed; after adding one it shows the previous list (`render()` runs before the new settings reach the page) | E2E probe: 3 rows shown, 2 stored |
-| 19 | 🟠 | Engine / Time | If the system clock goes backwards past a checkpoint, `shiftDatesBetween` walks ~20,000 fake days (start after end isn't handled) and the plant state becomes absurd | Code reading |
-| 20 | 🟢 | Settings UI | Deselecting the last workday (or start = end) is rejected but the control shows the rejected value; UI and stored data disagree | Code reading |
-
-**Design conflicts** (not crashes, but behaviour that contradicts itself):
-
-| # | Sev. | Area | Conflict |
-|---|---|---|---|
-| 21 | 🟠 | Habits | Questions hard-code their interval ("…in the last 2 hours?") even after the user changes it |
-| 22 | 🟢 | Habits | Daily habits offer sub-daily intervals (e.g. "Shutdown: did you close the laptop yesterday?" every 30 min) |
-| 23 | 🟠 | Data | "Start over" uses two `confirm()`s; on the second one, *Cancel* means "don't download, erase anyway". Easy to lose data by mistake |
-
-**Smaller improvements noted in the same review:** Enter doesn't submit Rename (and an unsaved name is dropped silently); the drawer doesn't refresh on changes from other tabs ("Last backup" stays "never" right after exporting); exported filename becomes `marumado---….json` for kanji names; an end time before the start silently creates an overnight shift; focus doesn't return to the gear button on close; removing a habit is instant, with no confirm or undo.
+None. The Settings review (#14–23) is fixed; see below.
 
 ## Fixed
 
@@ -45,6 +25,17 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 11 | 2026-10-04 | 🟠 | WebGL | Each tab used two WebGL contexts → "Too many active WebGL contexts" in Edge | User's Edge error page | `966faaf` |
 | 12 | 2026-10-04 | 🟢 | WebGL | "WEBGL_lose_context extension not supported" warning | User's Edge error page | `966faaf` |
 | 13 | 2026-10-04 | 🟠 | WebGL | A late "context lost" event from an old canvas marked the new one as lost | E2E (light mode) | `966faaf` |
+| 14 | 2026-10-04 | 🔴 | Engine / Settings | Changing work hours or workdays rewrote the plant's past | Settings review | `e81f7e9` |
+| 15 | 2026-10-04 | 🔴 | Engine / Settings | Changing a habit's interval re-read old answers | Settings review | `e81f7e9` |
+| 16 | 2026-10-04 | 🔴 | Engine / Settings | Removing an unanswered habit granted past care days | Settings review | `e81f7e9` |
+| 17 | 2026-10-04 | 🔴 | Vacation | Turning vacation off didn't bring questions back until tomorrow | Settings review | `e81f7e9` |
+| 18 | 2026-10-04 | 🟠 | Settings UI | Drawer lagged one step behind after Remove / Add | Settings review | `e81f7e9` |
+| 19 | 2026-10-04 | 🟠 | Engine / Time | Clock going backwards past a checkpoint walked ~20,000 fake days | Settings review | `e81f7e9` |
+| 20 | 2026-10-04 | 🟢 | Settings UI | Rejected workday / hours change still shown in the control | Settings review | `e81f7e9` |
+| 21 | 2026-10-04 | 🟠 | Habits | Questions hard-coded their interval ("…in the last 2 hours") | Settings review | `e81f7e9` |
+| 22 | 2026-10-04 | 🟢 | Habits | Daily habits offered sub-daily intervals | Settings review | `e81f7e9` |
+| 23 | 2026-10-04 | 🟠 | Data | "Start over": Cancel on the 2nd confirm meant "erase anyway" | Settings review | `e81f7e9` |
+| 24 | 2026-10-04 | 🟠 | New tab | Question card kept old wording after an interval change | E2E for #21 | `e81f7e9` |
 
 ## Details
 
@@ -125,3 +116,51 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 - **Cause:** "context lost" events arrive asynchronously; the old canvas's event fired after the new context was created and overwrote its state.
 - **Fix:** only the live canvas can change the state.
 - **Guard:** E2E "light mode rebuilds the 3D context without antialiasing".
+
+### 14–16. Settings changes rewrote the plant's past
+- **Symptom:** switching workdays Mon–Fri → 7 days dropped health 1.00 → 0.76 instantly; changing Eye break from 30 min to 2 h turned 0.29 into 0.63 for the same answers; removing an unanswered habit raised past care days 0 → 5 (exploitable).
+- **Cause:** the replay used the *current* settings for every past day.
+- **Fix:** history-changing saves (work hours, workdays, habit list, intervals) first fold every day before today into a checkpoint computed with the *old* settings (`freezePast`); new settings apply from today. Reuses the exact checkpoint from log compaction. Compaction never moves a checkpoint backwards. Settings now says "Changes apply from today on".
+- **Guard:** Vitest "settings apply from today on" (#14, #15, #16); E2E "#14 changing workdays in Settings does not rewrite the plant's past".
+
+### 17. Turning vacation off didn't bring questions back until tomorrow
+- **Symptom:** after unchecking Vacation mode the greeting still said "Enjoy your time off" and no question appeared for the rest of the day; that day couldn't be a care day.
+- **Cause:** vacation was compared by whole calendar days, so the day it ended still counted as vacation.
+- **Fix:** availability uses the exact time (`vacationAt`); a day is a vacation day only if vacation was on when that day's work ended (`vacationDay`). Care earned on a vacation day still counts; only penalties are skipped.
+- **Guard:** Vitest "vacation is measured in time"; E2E "#17 turning vacation off brings questions back immediately".
+
+### 18. Settings drawer lagged one step behind
+- **Symptom:** after "Remove" the habit stayed listed; after adding one, the previous list showed.
+- **Cause:** the drawer re-rendered right after saving, before the new settings reached the page.
+- **Fix:** the drawer re-renders whenever stored data changes (this tab or another), except while the user is typing in it (then on blur). Manual `render()` calls removed. Also fixes "Last backup: never" right after exporting and stale drawers in other tabs.
+- **Guard:** E2E "#18 the Settings drawer shows the saved habit list right away".
+
+### 19. Clock going backwards walked thousands of fake days
+- **Symptom (by code reading):** with a checkpoint in the "future" (system clock set back), the day loop never reached its end and ran ~20,000 days.
+- **Cause:** `shiftDatesBetween` assumed start ≤ end.
+- **Fix:** start after end returns no days; `freezePast` keeps a checkpoint that's ahead.
+- **Guard:** Vitest "clock going backwards".
+
+### 20. Rejected workday / hours change still shown
+- **Symptom:** deselecting the last workday (or start = end) showed the rejected state while the old value stayed saved.
+- **Fix:** pickers take a validator; rejected input snaps back to the last accepted value (Settings and onboarding). An end before the start now shows "Overnight shift: ends at … the next morning."
+- **Guard:** E2E "#20 a rejected workday toggle snaps back".
+
+### 21–22. Questions vs intervals
+- **Symptom:** "Did you drink water in the last 2 hours?" even at 30 min; "Shutdown" (about yesterday) could be set to every 30 min.
+- **Fix:** question templates with `{since}` ("in the last 30 minutes", "in the last hour", "today"); daily-only habits (Daylight, Real lunch, Shutdown) only offer "Once a day".
+- **Guard:** Vitest "question wording"; E2E "#21–22".
+
+### 23. "Start over" could erase by mistake
+- **Symptom:** two `confirm()`s; on the second ("Download a backup first?") *Cancel* meant "don't download, erase anyway".
+- **Fix:** one dialog (`ui/ask.ts`, native `<dialog>`) with explicit buttons: Cancel / Erase without backup / Download backup & erase. Cancel is focused; Escape cancels. Restore and Remove habit use the same dialog.
+- **Guard:** E2E "#23 Start over: Cancel keeps the plant".
+
+### 24. Question card kept old wording after an interval change
+- **Symptom:** changing Water to 30 min still showed "…in the last 2 hours?" on the open card.
+- **Cause:** the card only re-rendered when the *habit* changed.
+- **Fix:** the card re-renders when anything it shows changes (habit, interval, low hint).
+- **Guard:** E2E "#21–22" (found by it).
+
+### Smaller improvements from the same review
+Enter saves Rename; exported filenames fall back to `plant` for non-Latin names; focus returns to the gear when Settings closes; removing a habit asks first; adding a habit can't exceed 5 even from two tabs; turning vacation on twice (two tabs) doesn't stack.

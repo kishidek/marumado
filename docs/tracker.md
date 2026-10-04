@@ -1,6 +1,6 @@
 # Tracker
 
-Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk. Every bug is in the [bug log](bugs.md): 13 fixed, 10 open (Settings review).
+Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk. Every bug is in the [bug log](bugs.md): 24 fixed, 0 open.
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
@@ -10,12 +10,12 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 |---|---|---|---|
 | 0 | Decisions | ✅ | All blocking decisions answered (plan §5) |
 | 1 | Scaffold WXT | ✅ | Manifest, icons, build, zip; verified in Chromium and Edge |
-| 2 | Engine | ✅ | Engine + simulator + checkpoints; 29 Vitest tests in 3 time zones; `noUncheckedIndexedAccess` back on (48 sites fixed) |
+| 2 | Engine | ✅ | Engine + simulator + checkpoints; 37 Vitest tests in 3 time zones; `noUncheckedIndexedAccess` back on (48 sites fixed) |
 | 3 | Storage + multi-tab | ✅ | Web Locks + `storage.watch` + refresh on visibility. Deviation: one `local:events` key instead of per-day buckets (simpler; compact later) |
 | 4 | Wire UI to engine | ✅ | Onboarding, questions, plant, settings, rename, growth-based camera |
 | 5 | Resilience | ✅ | GL host (release when hidden, recover on return, no steal loop), CSS fallback window, early boot background, canvas fade-in. Release-when-hidden verified manually only (headless reports every tab visible) |
 | 6 | Backup | ✅ | Export, validated restore, pre-restore snapshot, backup reminder; E2E round-trip + corrupt file |
-| 7 | QA matrix | ✅ | Playwright suite in repo (`npm run test:e2e`): 17/17 |
+| 7 | QA matrix | ✅ | Playwright suite in repo (`npm run test:e2e`): 23/23 |
 | 8 | Store | ⏸️ | Postponed (private use, unpacked) |
 | 9 | Deck videos | ✅ | `npm run render:deck` → `deck-videos/` (1080p H.264, 8 s each: growth 30 d, neglect, recovery). Not committed (large) |
 
@@ -77,12 +77,13 @@ Full list with causes and guards: [bugs.md](bugs.md).
 
 | Item | Status | Notes |
 |---|---|---|
-| Settings changes rewrite the past (#14 hours/days, #15 intervals, #16 removing a habit) | ⬜ | Plan: close a checkpoint with the old settings on every change; new settings apply from today |
-| Vacation off doesn't resume questions until tomorrow (#17) | ⬜ | Compare by time, not by day |
-| Settings drawer one step behind (#18) | ⬜ | Drawer re-renders on settings changes (also from other tabs) |
-| Clock going backwards past a checkpoint (#19) | ⬜ | Guard `shiftDatesBetween` |
-| Rejected workday/hours still shown (#20) | ⬜ | Revert the control on invalid input |
-| Questions vs interval, daily-habit intervals, "Start over" dialog (#21–23) | ⬜ | Interval-aware wording; valid options per habit type; one clear dialog |
+| Settings changes rewrite the past (#14 hours/days, #15 intervals, #16 removing a habit) | ✅ | Checkpoint with the old settings on every history-changing save (`freezePast`) |
+| Vacation off doesn't resume questions until tomorrow (#17) | ✅ | Time-based (`vacationAt` / `vacationDay`) |
+| Settings drawer one step behind (#18) | ✅ | Drawer re-renders on every data change, also from other tabs |
+| Clock going backwards past a checkpoint (#19) | ✅ | Guard in `shiftDatesBetween` |
+| Rejected workday/hours still shown (#20) | ✅ | Pickers snap back; overnight hint |
+| Questions vs interval, daily-habit intervals, "Start over" dialog (#21–23) | ✅ | `{since}` wording, daily-only options, `ask()` dialog |
+| Card kept old wording after interval change (#24, found by E2E) | ✅ | Card keyed by its content |
 
 ## Missing pieces (plan §6)
 
@@ -103,6 +104,8 @@ Full list with causes and guards: [bugs.md](bugs.md).
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-04: Settings review fixed: #14–23 plus #24 found by the new E2E. Vitest 37 × 3 TZ, E2E 23/23.
 
 - 2026-10-04: Settings review: 7 bugs + 3 design conflicts logged as open in `bugs.md` (#14–23), not fixed yet.
 
