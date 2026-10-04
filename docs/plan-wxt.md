@@ -1,6 +1,8 @@
 # Plan: port to WXT and ship the MVP
 
-Status: phases 1–4 done, 6 partly (export/restore) · 2026-10-03 · stack: **WXT 0.21 + TypeScript (vanilla UI) + three.js**
+Status: **MVP complete** (phases 0–7 and 9 done, 8 postponed) · updated 2026-10-04 · stack: **WXT 0.21 + TypeScript (vanilla UI) + three.js**
+
+This is the design record. Live status: [tracker.md](tracker.md) · bugs: [bugs.md](bugs.md).
 
 ## 1. Target
 
@@ -107,22 +109,32 @@ Each phase ends with something that runs. The lab and mockup keep working throug
 2. **Decay / recovery**: 3 consecutive "Not yet" on a habit → visibly thirsty; 2 "Yes" → recovered. Tunable constants in `engine/model.ts`.
 3. **Yes/no habits only** in the MVP. "Mood check" (scale) and "Caffeine cut-off" (inverted) are removed from the catalog (10 habits left).
 4. **Rename** lives in Settings ("Your plant").
-5. **Start over** lives in Settings, always offering an export first.
-6. **Product name**: pending (shortlist proposed).
+5. **Start over** lives in Settings, always offering an export first (one dialog: Cancel / Erase without backup / Download backup & erase).
+6. **Product name**: **Marumado** (丸窓, the round window).
 7. **Chrome only** for now.
 8. **No search box**: the page doesn't add or change search; the omnibox keeps the user's default engine.
 9. **No Chrome Web Store for now**: private use, installed unpacked. Phase 8 is postponed.
-10. **Public GitHub repo** under `kishidek`; license pending.
+10. **Public GitHub repo** [`kishidek/marumado`](https://github.com/kishidek/marumado), **MIT** license.
+
+**Decided while building (2026-10-03 → 04):**
+
+11. **Settings apply from today on.** Changing work hours, workdays, the habit list or an interval never rewrites past days (the past is frozen into a checkpoint with the old settings).
+12. **Vacation is measured in time.** Turning it off brings questions back at once; care earned on a vacation day still counts, only penalties are skipped.
+13. **Daily-only habits** (Daylight, Real lunch, Shutdown) can only be asked once a day; questions word their interval ("in the last 30 minutes", "today").
+14. **History older than 90 days** is folded into an exact checkpoint (compaction); backups carry it.
+15. **Minimum browser**: Chrome / Edge 111.
 
 **Can wait (post-MVP):**
 
 - Garden graduation at 6–12 months, and what happens next (new seed? collection outside the window?).
 - Holidays / days off beyond weekends.
 
-## 6. Things not yet covered anywhere
+## 6. Things not covered at planning time
 
-- **No way to learn about crashes** (by design, no telemetry). Proposal: keep a small local error log and include it in the export, so testers can send it voluntarily.
-- **Beta channel**: publish as *unlisted* first and share the link with testers.
-- **Feedback moments**: the "Yes" micro-animation (drops / shine on the plant) is not designed yet; it matters for the habit loop.
-- **Rename + reset** are missing from Settings (see §5.4–5).
-- **Minimum Chrome version** to declare (ES2022 + WebGL2: any Chrome from the last few years).
+All resolved or parked; see [tracker.md](tracker.md) for details.
+
+- ✅ **Learning about crashes without telemetry**: local error log (last 50) shown in Settings and included in backups.
+- ⏸️ **Beta channel** (unlisted store listing): waits for the Chrome Web Store, postponed.
+- ✅ **"Yes" feedback**: droplets / glints, a perk-up sway and eased health changes.
+- ✅ **Rename + start over** in Settings.
+- ✅ **Minimum Chrome version**: 111 in the manifest.

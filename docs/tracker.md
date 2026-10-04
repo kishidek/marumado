@@ -1,8 +1,21 @@
 # Tracker
 
-Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk. Every bug is in the [bug log](bugs.md): 24 fixed, 0 open.
+Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk. Every bug is in the [bug log](bugs.md).
+
+## Summary (2026-10-04)
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
+
+| Area | Status |
+|---|---|
+| Phases | 0–7 and 9 ✅ · 8 (Chrome Web Store) ⏸️ postponed |
+| P0 risks | 9 / 9 ✅ |
+| P1 risks | 11 / 11 ✅ |
+| P2 risks | 5 / 6 ✅ · "very old plants" 🟡 waits for garden graduation |
+| Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
+| Bugs | 24 fixed · 0 open |
+| Tests | Vitest 37 (× 3 time zones) · Playwright E2E 23 |
+| Left | Post-MVP only: garden graduation, holidays, mood / caffeine habits |
 
 ## Phases
 
@@ -64,8 +77,6 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
 ### Found while closing the tracker
 
-Full list with causes and guards: [bugs.md](bugs.md).
-
 | Bug | Status | Notes |
 |---|---|---|
 | A habit added weeks later started at 0 health (penalized for days before it existed) | ✅ | `addedAt` per habit; Vitest |
@@ -104,6 +115,8 @@ Full list with causes and guards: [bugs.md](bugs.md).
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-04: docs pass: tracker summary added; plan status, decisions and §6 brought up to date.
 
 - 2026-10-04: Settings review fixed: #14–23 plus #24 found by the new E2E. Vitest 37 × 3 TZ, E2E 23/23.
 
