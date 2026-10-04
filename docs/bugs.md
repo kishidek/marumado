@@ -40,7 +40,7 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 24 | 2026-10-04 | 🟠 | New tab | Question card kept old wording after an interval change | E2E for #21 | `e81f7e9` |
 | 25 | 2026-10-05 | 🟠 | Garden | New-seed dialog opened over the move ceremony | Screenshots of the ceremony | `7a01c5d` |
 | 26 | 2026-10-05 | 🟢 | Garden | The moving plant flashed in its garden slot before taking off | Same review | `7a01c5d` |
-| 27 | 2026-10-05 | 🟠 | Garden | While the new seed waited for its name, greeting, toasts and help still used the moved plant's name | Garden UI audit | (this commit) |
+| 27 | 2026-10-05 | 🟠 | Garden | While the new seed waited for its name, greeting, toasts and help still used the moved plant's name | Garden UI audit | `c1fb6a3` |
 
 ## Details
 
