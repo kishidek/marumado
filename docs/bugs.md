@@ -38,8 +38,8 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 22 | 2026-10-04 | 🟢 | Habits | Daily habits offered sub-daily intervals | Settings review | `e81f7e9` |
 | 23 | 2026-10-04 | 🟠 | Data | "Start over": Cancel on the 2nd confirm meant "erase anyway" | Settings review | `e81f7e9` |
 | 24 | 2026-10-04 | 🟠 | New tab | Question card kept old wording after an interval change | E2E for #21 | `e81f7e9` |
-| 25 | 2026-10-05 | 🟠 | Garden | New-seed dialog opened over the move ceremony | Screenshots of the ceremony | (this commit) |
-| 26 | 2026-10-05 | 🟢 | Garden | The moving plant flashed in its garden slot before taking off | Same review | (this commit) |
+| 25 | 2026-10-05 | 🟠 | Garden | New-seed dialog opened over the move ceremony | Screenshots of the ceremony | `7a01c5d` |
+| 26 | 2026-10-05 | 🟢 | Garden | The moving plant flashed in its garden slot before taking off | Same review | `7a01c5d` |
 
 ## Details
 
