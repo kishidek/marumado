@@ -1,6 +1,6 @@
 # Tracker
 
-Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk. Every bug found and fixed is in the [bug log](bugs.md) (13 so far).
+Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk. Every bug is in the [bug log](bugs.md): 13 fixed, 10 open (Settings review).
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
@@ -73,6 +73,17 @@ Full list with causes and guards: [bugs.md](bugs.md).
 | "WEBGL_lose_context not supported" warning | ✅ | Don't force-lose an already lost context |
 | A late "context lost" event from an old canvas marked the new one as lost | ✅ | Only the live canvas can change state (E2E via light mode) |
 
+### Settings review (2026-10-04)
+
+| Item | Status | Notes |
+|---|---|---|
+| Settings changes rewrite the past (#14 hours/days, #15 intervals, #16 removing a habit) | ⬜ | Plan: close a checkpoint with the old settings on every change; new settings apply from today |
+| Vacation off doesn't resume questions until tomorrow (#17) | ⬜ | Compare by time, not by day |
+| Settings drawer one step behind (#18) | ⬜ | Drawer re-renders on settings changes (also from other tabs) |
+| Clock going backwards past a checkpoint (#19) | ⬜ | Guard `shiftDatesBetween` |
+| Rejected workday/hours still shown (#20) | ⬜ | Revert the control on invalid input |
+| Questions vs interval, daily-habit intervals, "Start over" dialog (#21–23) | ⬜ | Interval-aware wording; valid options per habit type; one clear dialog |
+
 ## Missing pieces (plan §6)
 
 | Item | Status | Notes |
@@ -92,6 +103,8 @@ Full list with causes and guards: [bugs.md](bugs.md).
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-04: Settings review: 7 bugs + 3 design conflicts logged as open in `bugs.md` (#14–23), not fixed yet.
 
 - 2026-10-04: bug log created (`docs/bugs.md`, 13 bugs with cause, fix, guard and commit).
 

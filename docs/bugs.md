@@ -1,6 +1,32 @@
 # Bug log
 
-Every bug found and fixed so far, oldest first. Each entry says how it showed up, why it happened, what fixed it and what now guards against it coming back.
+Every bug found so far, oldest first: **open** ones first, then the fixed ones. Each fixed entry says how it showed up, why it happened, what fixed it and what now guards against it coming back.
+
+## Open
+
+Found in the Settings review (2026-10-04). Not fixed yet.
+
+| # | Sev. | Area | Bug | Evidence |
+|---|---|---|---|---|
+| 14 | 🔴 | Engine / Settings | Changing work hours or workdays rewrites the past: switching Mon–Fri → 7 days drops health 1.00 → 0.76 instantly (past weekends become ignored workdays) | Vitest probe |
+| 15 | 🔴 | Engine / Settings | Changing a habit's interval re-reads old answers: the same three "Not yet" give 0.29 at 30 min but 0.63 at 2 h | Vitest probe |
+| 16 | 🔴 | Engine / Settings | Removing an unanswered habit makes the plant grow instantly: past care days 0 → 5 (the "more than half" bar is recomputed with fewer habits). Exploitable | Vitest probe |
+| 17 | 🔴 | Engine / Vacation | Turning vacation off brings no questions back until tomorrow; greeting still says "Enjoy your time off" and today can't be a care day (`onVacation` compares whole days, not times) | E2E probe |
+| 18 | 🟠 | Settings UI | The drawer lags one step: after "Remove" the habit stays listed; after adding one it shows the previous list (`render()` runs before the new settings reach the page) | E2E probe: 3 rows shown, 2 stored |
+| 19 | 🟠 | Engine / Time | If the system clock goes backwards past a checkpoint, `shiftDatesBetween` walks ~20,000 fake days (start after end isn't handled) and the plant state becomes absurd | Code reading |
+| 20 | 🟢 | Settings UI | Deselecting the last workday (or start = end) is rejected but the control shows the rejected value; UI and stored data disagree | Code reading |
+
+**Design conflicts** (not crashes, but behaviour that contradicts itself):
+
+| # | Sev. | Area | Conflict |
+|---|---|---|---|
+| 21 | 🟠 | Habits | Questions hard-code their interval ("…in the last 2 hours?") even after the user changes it |
+| 22 | 🟢 | Habits | Daily habits offer sub-daily intervals (e.g. "Shutdown: did you close the laptop yesterday?" every 30 min) |
+| 23 | 🟠 | Data | "Start over" uses two `confirm()`s; on the second one, *Cancel* means "don't download, erase anyway". Easy to lose data by mistake |
+
+**Smaller improvements noted in the same review:** Enter doesn't submit Rename (and an unsaved name is dropped silently); the drawer doesn't refresh on changes from other tabs ("Last backup" stays "never" right after exporting); exported filename becomes `marumado---….json` for kanji names; an end time before the start silently creates an overnight shift; focus doesn't return to the gear button on close; removing a habit is instant, with no confirm or undo.
+
+## Fixed
 
 Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 minor or internal
 
