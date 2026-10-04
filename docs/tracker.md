@@ -1,6 +1,6 @@
 # Tracker
 
-Status of [the plan](plan-wxt.md). Updated with every change that moves a phase or a risk. Every bug is in the [bug log](bugs.md).
+**Living document.** Status of every plan in [plans/](plans/) (phases and risks come from [001 · MVP](plans/001-mvp-wxt.md)); updated with every change. Bugs: [bugs.md](bugs.md). Index of all docs: [README.md](README.md).
 
 ## Summary (2026-10-04)
 
@@ -15,7 +15,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
 | Bugs | 24 fixed · 0 open |
 | Tests | Vitest 37 (× 3 time zones) · Playwright E2E 23 |
-| Left | Post-MVP only: garden graduation (planning, [garden-plan.md](garden-plan.md)), holidays, mood / caffeine habits |
+| Left | Post-MVP only: garden graduation (planning, [002 · garden](plans/002-garden.md)), holidays, mood / caffeine habits |
 
 ## Phases
 
@@ -110,15 +110,17 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
 | Item | Status |
 |---|---|
-| Garden graduation at 6–12 months, and what comes next | 🟡 | [garden-plan.md](garden-plan.md): decisions taken (G0 ✅); next G1 (lab: garden scene + generation styles) |
+| Garden graduation at 6–12 months, and what comes next | 🟡 | [002 · garden](plans/002-garden.md): decisions taken (G0 ✅); next G1 (lab: garden scene + generation styles) |
 | Holidays / days off beyond weekends | ⬜ |
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
 
+- 2026-10-04: docs reorganised: `docs/README.md` index; plans numbered in `docs/plans/` (001 MVP = done/frozen with known deviations, 002 garden = active).
+
 - 2026-10-04: garden decisions: automatic at 6 months; new pot + new seed with a different leaf green; user picks flower colour; garden reacts softly to current health.
 
-- 2026-10-04: garden graduation plan drafted (`docs/garden-plan.md`); scene geometry checked: the garden fits in the lower half of the round window, ~2–9 m out.
+- 2026-10-04: garden graduation plan drafted (`docs/plans/002-garden.md`); scene geometry checked: the garden fits in the lower half of the round window, ~2–9 m out.
 
 - 2026-10-04: docs pass: tracker summary added; plan status, decisions and §6 brought up to date.
 

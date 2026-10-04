@@ -1,8 +1,17 @@
-# Plan: port to WXT and ship the MVP
+# 001 · MVP: port to WXT and ship
 
-Status: **MVP complete** (phases 0–7 and 9 done, 8 postponed) · updated 2026-10-04 · stack: **WXT 0.21 + TypeScript (vanilla UI) + three.js**
+| | |
+|---|---|
+| **Status** | **Done** (frozen record) · MVP shipped; phase 8 (Chrome Web Store) postponed |
+| **Created** | 2026-10-03 |
+| **Updated** | 2026-10-04 |
+| **Supersedes** | — |
+| **Superseded by** | — (follow-up work: [002 · Moving to the garden](002-garden.md)) |
+| **Live status** | [tracker.md](../tracker.md) · bugs: [bugs.md](../bugs.md) |
 
-This is the design record. Live status: [tracker.md](tracker.md) · bugs: [bugs.md](bugs.md).
+> **Historical document.** This is the plan as written before and during the build. Where the implementation went another way, see [Known deviations](#known-deviations) at the end; the code and the tracker are the source of truth.
+
+Stack: **WXT 0.21 + TypeScript (vanilla UI) + three.js**
 
 ## 1. Target
 
@@ -131,10 +140,26 @@ Each phase ends with something that runs. The lab and mockup keep working throug
 
 ## 6. Things not covered at planning time
 
-All resolved or parked; see [tracker.md](tracker.md) for details.
+All resolved or parked; see [tracker.md](../tracker.md) for details.
 
 - ✅ **Learning about crashes without telemetry**: local error log (last 50) shown in Settings and included in backups.
 - ⏸️ **Beta channel** (unlisted store listing): waits for the Chrome Web Store, postponed.
 - ✅ **"Yes" feedback**: droplets / glints, a perk-up sway and eased health changes.
 - ✅ **Rename + start over** in Settings.
 - ✅ **Minimum Chrome version**: 111 in the manifest.
+
+## Known deviations
+
+What the build did differently from this plan (2026-10-03 → 04):
+
+| Plan | Implemented |
+|---|---|
+| §2 `engine/events.ts` | `engine/types.ts`; plus `catalog.ts` (habits) and `simulate.ts` (dev time travel, deck videos) |
+| §2 `storage/sync.ts` | Merged into `storage/items.ts`; plus `storage/error-log.ts` (local diagnostics) |
+| §2 `scene/` "unchanged" | Added `gl-host.ts` (WebGL lifecycle) and `feedback.ts` (answer animation) |
+| §2 `ui/` components | `ask.ts`, `dom.ts`, `help.ts`, `icons.ts`, `onboarding.ts`, `pickers.ts`, `settings.ts`; lab code in `src/lab/`, page in `lab/` |
+| §4 P0 events bucketed per day (`local:events:YYYY-MM-DD`), lock `ajisai-write` | One `local:events` key + checkpoint compaction (events older than 90 days fold into an exact checkpoint); lock `marumado-write` |
+| §4 P0 "Extension context invalidated" banner | Not applicable: on an update Chrome replaces open Marumado tabs with its default new tab (E2E) |
+| §4 P0 >16 tabs: e2e "cycle through 20 tabs" | Headless reports every tab visible; E2E covers loss → CSS window → recovery; release-on-hidden verified manually |
+| §5 decisions 1–10 | Plus 11–15 added during the build (settings apply from today, time-based vacation, daily-only habits, compaction, Chrome 111) |
+| Not in the plan | Settings review fixed 11 bugs (#14–24 in [bugs.md](../bugs.md)) |

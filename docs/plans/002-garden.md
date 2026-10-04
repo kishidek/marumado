@@ -1,6 +1,13 @@
-# Plan: moving to the garden (庭へ)
+# 002 · Moving to the garden (庭へ)
 
-Status: **decided, ready to build** (G0 done) · 2026-10-04 · part of the post-MVP work in [tracker.md](tracker.md)
+| | |
+|---|---|
+| **Status** | **Active** · decisions taken (G0 ✅); next G1 (lab: garden scene + generation styles) |
+| **Created** | 2026-10-04 |
+| **Updated** | 2026-10-04 |
+| **Supersedes** | — (extends [001 · MVP](001-mvp-wxt.md), "post-MVP: garden graduation") |
+| **Superseded by** | — |
+| **Live status** | [tracker.md](../tracker.md) → Post-MVP |
 
 ## 1. Why
 

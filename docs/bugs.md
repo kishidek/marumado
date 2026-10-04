@@ -1,5 +1,7 @@
 # Bug log
 
+**Living document.** Index of all docs: [README.md](README.md).
+
 Every bug found so far: **open** ones first, then the fixed ones (oldest first). Each fixed entry says how it showed up, why it happened, what fixed it and what now guards against it coming back.
 
 ## Open
