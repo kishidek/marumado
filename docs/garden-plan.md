@@ -4,7 +4,7 @@ Status: **decided, ready to build** (G0 done) · 2026-10-04 · part of the post-
 
 ## 1. Why
 
-Growth slows down after a year and the plant hits its leaf/flower caps: without a next step the game stops changing, and so does the habit loop. Moving the ajisai to the garden outside the round window turns a year of care into something permanent and visible, and gives the user a fresh seed to grow next to it. That makes the game infinite.
+Growth slows down as the plant matures and it hits its leaf/flower caps: without a next step the game stops changing, and so does the habit loop. Moving the ajisai to the garden outside the round window turns six months of care into something permanent and visible, and gives the user a fresh seed to grow next to it. That makes the game infinite.
 
 ## 2. The idea in one paragraph
 
@@ -39,6 +39,7 @@ Each generation combines three traits; leaves and pot rotate automatically so tw
 - A garden ground outside the wall: moss, a gravel band, stepping stones and a small stone lantern (tōrō), between the window and the near hills (≈ 2–9 m away), lower than the counter.
 - **8 fixed slots** at different depths so plants don't hide each other and stay inside the round window from the close-up camera *and* from the full-room camera. Slot positions get validated in the lab (phase G1).
 - Garden plants use **lower detail** (fewer florets and leaves, simpler stems) and are rebuilt only when the displayed health moves a full step (5 steps between dull and fresh), so they cost almost nothing per frame. Light mode shows at most 3.
+- With more than 8 plants, the garden shows the 8 most recent; older ones stay in the data and the backup.
 - Sky / day–night light the garden like the mountains (same palette); at night the lantern glows faintly.
 
 ### 4.2 Data (backup schema v2)
@@ -78,21 +79,32 @@ current: { style: PlantStyle; plantedAt: number; careDaysAtStart: number };
 3. **New pot, new seed**: a short dialog: "Aoi is in the garden. Plant a new seed": name it (suggestions) and pick its flower colour. A new pot appears with the sprout; the camera goes back to the close-up, with the previous plant visible in the garden behind it.
 4. The help modal and onboarding mention the garden in one line each.
 
-### 4.4 Engine and tests
+### 4.4 Edge cases
+
+| Case | Behaviour |
+|---|---|
+| The tab is closed before naming the new seed | The plant is already in the garden; the new-seed dialog comes back on the next tab. Until then the pot shows the sprout with default choices (suggested name, blue flowers) |
+| Several tabs open when the threshold is reached | The move is written once, under the same Web Lock as every other write; the other tabs just update (garden + new sprout), and only the tab that ran the ceremony shows the dialog |
+| Vacation, off-hours or a dormant plant at the threshold | Doesn't matter: the move happens on the next visible tab |
+| Restoring a backup from before the move | Restores exactly that state (plant back in the pot, no garden entry) |
+| Start over | Erases the garden too |
+| Reduce motion / light mode | Cross-fade instead of the flight through the window |
+
+### 4.5 Engine and tests
 
 - Pure functions: `isGardenTime(state)`, `moveToGarden(settings, state, now, choices)`, `nextStyle(garden, flowers)`; growth offset applied in one place.
 - Vitest: eligibility thresholds, growth restarts, health continuity, checkpoint exactness across a move, schema v1 → v2 restore.
-- E2E: simulate a year with the dev time travel, move, check garden slot + new sprout + backup round-trip.
-- Deck: a 4th video "a year later: to the garden" from `npm run render:deck`.
+- E2E: simulate 6 months with the dev time travel, check the automatic move, garden slot, new pot + sprout, the new-seed dialog (also after closing the tab), two tabs at once, and backup round-trip.
+- Deck: a 4th video "six months later: to the garden" from `npm run render:deck`.
 
 ## 5. Phases
 
 | # | Phase | Done when |
 |---|---|---|
-| G0 | Decisions (§6) | Answered |
+| G0 | Decisions (§3) | ✅ Answered 2026-10-04 |
 | G1 | Lab: garden scene (ground, lantern, 8 slots, low-detail plants, day/night) **and the generation styles** (4 flower colours, 5 leaf greens, 5 pots) | Screenshots with 1, 3 and 8 plants from both cameras; every style variant side by side; frame cost measured |
 | G2 | Engine + data (schema v2, growth offset, move, eligibility) | Vitest green in 3 time zones |
-| G3 | New tab: garden rendering, badge, Settings entry, ceremony, new-seed dialog | E2E: year → move → new sprout → reload keeps everything |
+| G3 | New tab: garden rendering, "almost ready" notice, automatic ceremony, new pot, new-seed dialog | E2E: 6 months → automatic move → new pot + sprout → reload keeps everything |
 | G4 | Backup v2, help/onboarding copy, deck video, docs (tracker, bug log, plan) | Full suites green; docs updated |
 
 ## 6. Decisions
@@ -104,7 +116,7 @@ All answered in §3 (G0 done).
 | Risk | Mitigation |
 |---|---|
 | Garden hidden by the counter or outside the round window at some camera distances | Validate slots in the lab from both cameras before building the rest (G1) |
-| Frame cost with 8 plants | Low-detail, built-once garden plants; cap in light mode; measure in G1 |
+| Frame cost with 8 plants | Low-detail garden plants, rebuilt only on a health step; cap in light mode; measure in G1 |
 | Growth reset confuses the camera / pot size | Camera and pot already key on growth: the new seed gets the close-up and the small pot back, by design (in its new glaze) |
 | An automatic move feels abrupt | "Almost ready" notice beforehand; the ceremony waits for a fresh tab, not mid-answer |
 | Old backups / older extension versions | v1 restores into v2; older builds already reject newer schemas |
