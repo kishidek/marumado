@@ -46,6 +46,7 @@ import { initSettings, openSettings, refreshSettings, settingsOpen } from '../..
 import './style.css';
 
 const DEV = import.meta.env.DEV;
+const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 const params = new URLSearchParams(location.search);
 
 /** Dev-only visual overrides (never affect stored data). */
@@ -61,6 +62,11 @@ let checkpoint: Checkpoint | null = null;
 let gardenStored: GardenState | null = null;
 /** The garden as stored, or the first generation if nothing has moved yet. */
 const garden = () => gardenStored ?? initialGarden(settings!);
+/**
+ * How the current plant is called in the UI. While the new seed waits for its name, the stored
+ * name still belongs to the plant that moved, so it must not be used (bug log #27).
+ */
+const plantLabel = () => (settings && gardenStored?.pendingSeed ? 'your new seed' : (settings?.plantName ?? 'your ajisai'));
 /** Seed of a generation's plant shape (generation 0 keeps the original seed 7). */
 const seedFor = (generation: number) => 7 + generation * 13;
 let state: PlantState | null = null;
@@ -236,7 +242,7 @@ function displayDate() {
 }
 
 function greeting(h: number, avail: Availability | null) {
-  const name = settings?.plantName;
+  const name = settings ? plantLabel() : undefined;
   if (name && avail === 'vacation') return `Enjoy your time off. ${name} is waiting.`;
   if (name && avail === 'off-hours') return h < 5 || h >= 21 ? `Time to rest. ${name} is sleeping.` : `Off the clock. ${name} is resting.`;
   if (h < 12) return 'Good morning';
@@ -372,7 +378,7 @@ function showDone() {
   setCard(
     [
       el('div', { className: 'ask-head' }, el('span', { className: 'ask-icon' }, icon(Sprout, 18)), el('p', { className: 'ask-eyebrow' }, 'All caught up')),
-      el('h3', {}, `${settings!.plantName} is happy for now.`),
+      el('h3', {}, `${capitalize(plantLabel())} is happy for now.`),
       el('p', { className: 'hint' }, 'See you on a later tab.'),
     ],
     '__done',
@@ -405,7 +411,7 @@ async function answer(habitId: string, kind: Answer) {
   const name = catalogHabit(habitId)!.name.toLowerCase();
   if (kind === 'later') toast('Okay, I’ll ask again in 30 minutes.');
   else if (!counts) toast('Noted. That one already counted recently.');
-  else toast(kind === 'yes' ? `Nice. ${s.plantName} felt that ${name}.` : 'No worries. Try to fit it in soon.');
+  else toast(kind === 'yes' ? `Nice. ${capitalize(plantLabel())} felt that ${name}.` : 'No worries. Try to fit it in soon.');
 
   const after = computeState(s, events, now, checkpoint);
   if (duePrompts(s, after, now).length === 0) showDone();
@@ -501,7 +507,7 @@ async function maybeRemindVacation(now: number) {
   const today = new Date(now).toDateString();
   if ((await vacationReminderItem.getValue()) === today) return;
   setTimeout(() => {
-    toast(`${settings!.plantName} is still on vacation mode. Back at work? Turn it off in Settings.`);
+    toast(`${capitalize(plantLabel())} is still on vacation mode. Back at work? Turn it off in Settings.`);
     void vacationReminderItem.setValue(today);
   }, 4500);
 }
@@ -517,7 +523,7 @@ async function maybeRemindBackup(now: number) {
   if ((await backupReminderItem.getValue()) === today) return;
   // Remember it only once it has actually been shown (the tab may close before the delay).
   setTimeout(() => {
-    toast(`It’s been a while since you backed up ${s.plantName}. Settings → Export backup.`);
+    toast(`It’s been a while since your last backup. Settings → Export backup.`);
     void backupReminderItem.setValue(today);
   }, 1500);
 }
@@ -627,8 +633,8 @@ if (DEV) {
 installErrorLog();
 $('openSettings').append(icon(SettingsIcon, 20));
 $('openSettings').addEventListener('click', () => openSettings(true));
-initSettings({ getSettings: () => settings, getEvents: () => events, getCheckpoint: () => checkpoint, getGarden: () => gardenStored });
-initHelp({ plantName: () => settings?.plantName ?? 'your ajisai', reduceMotion: () => !!settings?.reduceMotion, settingsOpen });
+initSettings({ plantLabel, getSettings: () => settings, getEvents: () => events, getCheckpoint: () => checkpoint, getGarden: () => gardenStored });
+initHelp({ plantName: plantLabel, reduceMotion: () => !!settings?.reduceMotion, settingsOpen });
 mountDevControls();
 
 resize();

@@ -10,6 +10,8 @@ import { habitIcon } from './icons';
 import { daysPicker, hoursPicker } from './pickers';
 
 interface Ctx {
+  /** "Hana", or "your new seed" while the new seed waits for its name. */
+  plantLabel: () => string;
   getSettings: () => Settings | null;
   getEvents: () => AnswerEvent[];
   getCheckpoint: () => Checkpoint | null;
@@ -93,8 +95,22 @@ function render() {
   if (!s) return;
   const active = s.habits;
 
+  // --- Your garden (plans/002-garden.md): newest first
+  const garden = ctx.getGarden();
+  const moved = [...(garden?.moved ?? [])].reverse();
+  const gardenRows = moved.map((m) =>
+    el(
+      'div',
+      { className: 'setting-row garden-row' },
+      swatch(m.style.flowers),
+      el('span', { className: 'grow' }, m.name, el('small', {}, `In the garden for ${relativeSpan(Date.now() - m.movedAt)} · ${capitalize(m.style.flowers)} flowers`)),
+    ),
+  );
+  const currentFlowers = garden?.current.style.flowers ?? 'blue';
+  const generation = (garden?.moved.length ?? 0) + 1;
+
   // --- Your plant (Enter or the button saves)
-  const nameInput = el('input', { type: 'text', className: 'rename-input', value: s.plantName, maxLength: 24, ariaLabel: 'Plant name' });
+  const nameInput = el('input', { type: 'text', className: 'rename-input', value: garden?.pendingSeed ? '' : s.plantName, placeholder: 'Name your new seed', maxLength: 24, ariaLabel: 'Plant name', disabled: !!garden?.pendingSeed });
   const renameBtn = el('button', { type: 'button', className: 'btn' }, 'Rename');
   const rename = async () => {
     const name = nameInput.value.trim();
@@ -177,9 +193,10 @@ function render() {
       return;
     }
     const b = parsed.backup;
+    const inGarden = b.garden?.moved.length ?? 0;
     const ok = await ask({
       title: `Restore ${b.settings.plantName}?`,
-      body: `This replaces ${current().plantName} with the backup (${b.events.length} answers). Export ${current().plantName} first if you want to keep it.`,
+      body: `This replaces your plant${ctx.getGarden()?.moved.length ? ' and your garden' : ''} with the backup (${b.events.length} answers${inGarden ? `, ${inGarden} in the garden` : ''}). Export first if you want to keep what you have now.`,
       actions: [
         { label: 'Cancel', value: 'cancel', kind: 'ghost' },
         { label: 'Restore', value: 'restore', kind: 'primary' },
@@ -195,10 +212,10 @@ function render() {
   // One dialog with explicit choices (two confirm()s made "Cancel" mean "erase anyway").
   const startOver = el('button', { type: 'button', className: 'btn danger' }, 'Start over…');
   startOver.addEventListener('click', async () => {
-    const name = current().plantName;
+    const gardenCount = ctx.getGarden()?.moved.length ?? 0;
     const choice = await ask({
       title: 'Start over with a new seed?',
-      body: `${name}'s history will be erased from this browser. This can't be undone.`,
+      body: `${capitalize(ctx.plantLabel())}${gardenCount ? ` and your garden (${gardenCount} ${gardenCount === 1 ? 'plant' : 'plants'})` : ''} will be erased from this browser, with all history. This can't be undone.`,
       actions: [
         { label: 'Cancel', value: 'cancel', kind: 'ghost' },
         { label: 'Erase without backup', value: 'erase', kind: 'danger' },
@@ -215,6 +232,8 @@ function render() {
   $('settingsBody').replaceChildren(
     el('h3', {}, 'Your plant'),
     el('div', { className: 'setting-row' }, nameInput, renameBtn),
+    el('div', { className: 'setting-row' }, swatch(currentFlowers), el('span', { className: 'grow' }, `${capitalize(currentFlowers)} flowers`, el('small', {}, generation > 1 ? `Generation ${generation} · moves to the garden after 6 months of care` : 'Moves to the garden after 6 months of care'))),
+    ...(gardenRows.length ? [el('h3', {}, `Your garden · ${gardenRows.length}`), ...gardenRows] : []),
 
     el('h3', {}, `Habits · ${active.length} of ${MAX_HABITS}`),
     ...habitRows,
@@ -225,7 +244,7 @@ function render() {
     hours,
     days,
     hoursError,
-    el('p', { className: 'note' }, `Questions only appear during these hours. ${s.plantName} never loses health outside them.`),
+    el('p', { className: 'note' }, `Questions only appear during these hours. Your plants never lose health outside them.`),
 
     el('h3', {}, 'Away'),
     toggleRow('Vacation mode', 'Pause questions and health while you’re away.', onVacation, (on) =>
@@ -249,7 +268,7 @@ function render() {
     el(
       'p',
       { className: 'note' },
-      `Last backup: ${s.lastExportAt ? relativeTime(Date.now() - s.lastExportAt) : 'never'}. If you uninstall the extension or clear browser data, ${s.plantName} is gone unless you have a backup.`,
+      `Last backup: ${s.lastExportAt ? relativeTime(Date.now() - s.lastExportAt) : 'never'}. If you uninstall the extension or clear browser data, your plants are gone unless you have a backup.`,
     ),
     diagnosticsRow,
     el('div', { className: 'setting-row' }, el('span', { className: 'grow' }, 'Start over', el('small', {}, 'Erase this plant and plant a new seed.')), startOver),
@@ -274,4 +293,23 @@ async function paintDiagnostics(row: HTMLElement) {
     ),
     clear,
   );
+}
+
+const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+const SWATCH: Record<string, string> = { blue: '#5b6fd6', violet: '#9b5fc9', pink: '#e07a9a', white: '#efe9dc' };
+function swatch(flowers: string) {
+  const dot = el('span', { className: 'swatch' });
+  dot.style.background = SWATCH[flowers] ?? SWATCH.blue!;
+  return dot;
+}
+
+/** "3 days" / "2 months" / "1 year". */
+function relativeSpan(ms: number) {
+  const days = Math.max(0, Math.round(ms / 86_400_000));
+  if (days < 45) return days === 1 ? '1 day' : `${days} days`;
+  const months = Math.round(days / 30.4);
+  if (months < 12) return `${months} months`;
+  const years = Math.round((days / 365) * 10) / 10;
+  return years === 1 ? '1 year' : `${years} years`;
 }

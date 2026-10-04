@@ -14,7 +14,7 @@ Everything about how Marumado is planned, built and tracked. **Start here.**
 | Doc | Kind | Status | Created | Updated | What it is |
 |---|---|---|---|---|---|
 | [tracker.md](tracker.md) | Living | Current | 2026-10-03 | 2026-10-05 | Status of every phase, risk and open item; dated log of changes |
-| [bugs.md](bugs.md) | Living | Current | 2026-10-04 | 2026-10-05 | Every bug: severity, symptom, cause, fix, guard, commit (26 fixed, 0 open) |
+| [bugs.md](bugs.md) | Living | Current | 2026-10-04 | 2026-10-05 | Every bug: severity, symptom, cause, fix, guard, commit (27 fixed, 0 open) |
 | [plans/001-mvp-wxt.md](plans/001-mvp-wxt.md) | Plan | **Done** (frozen) | 2026-10-03 | 2026-10-04 | MVP: port to WXT, engine, risks, decisions 1–15. Ends with *Known deviations* |
 | [plans/002-garden.md](plans/002-garden.md) | Plan | **Active** | 2026-10-04 | 2026-10-05 | Moving the plant to the garden after 6 months; generations; phases G0–G4 (G4 left) |
 

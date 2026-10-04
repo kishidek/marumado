@@ -65,7 +65,7 @@ export function openOnboarding(onDone: (s: Settings, flowers: FlowerColour) => v
         input,
         el('p', { className: 'note' }, 'Need an idea?'),
         ideas,
-        el('p', { className: 'note' }, 'Flower colour'),
+        el('p', { className: 'note' }, 'Flower colour · its first flowers open after about 6 weeks of care'),
         flowerPicker(flowers, (c) => (flowers = c)),
       );
       sync();

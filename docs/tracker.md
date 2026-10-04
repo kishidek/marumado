@@ -13,8 +13,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | P1 risks | 11 / 11 ✅ |
 | P2 risks | 6 / 6 ✅ |
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
-| Bugs | 26 fixed · 0 open |
-| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 26 |
+| Bugs | 27 fixed · 0 open |
+| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 |
 | Left | Garden: deck videos (G4). Post-MVP: holidays, mood / caffeine habits |
 
 ## Phases
@@ -96,6 +96,19 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Questions vs interval, daily-habit intervals, "Start over" dialog (#21–23) | ✅ | `{since}` wording, daily-only options, `ask()` dialog |
 | Card kept old wording after interval change (#24, found by E2E) | ✅ | Card keyed by its content |
 
+### Garden UI audit (2026-10-05)
+
+| Item | Status | Notes |
+|---|---|---|
+| Flower colour in onboarding | ✅ | Name step; now says the first flowers open after ~6 weeks of care |
+| Messages when a plant moves | ✅ | Ceremony → "<name> moved to the garden" dialog → toast after naming |
+| Texts while the new seed has no name (#27) | ✅ | Greeting, toasts, help and Settings say "your new seed", never the moved plant's name |
+| Who is in the garden | ✅ | Settings → "Your garden · N": name, colour, time in the garden (newest first). Pill: "N in the garden" |
+| Current plant's colour / generation | ✅ | Settings → Your plant: swatch, "Generation N", when it will move |
+| Start over / Restore mention the garden | ✅ | Dialogs say the garden is erased / replaced, with counts |
+| Help modal | ✅ | 6 tiles in one row ("Skip it · it droops, but never dies"; "After 6 months · it moves to the garden") |
+| Help video shows the garden | ⬜ | Waits for the video work (G4), on hold by user's request |
+
 ## Missing pieces (plan §6)
 
 | Item | Status | Notes |
@@ -115,6 +128,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 
 ## Log
+
+- 2026-10-05: garden UI audit: Settings shows the garden and the current plant's colour/generation; pending-seed texts fixed (#27); garden-aware Start over / Restore; help tiles; onboarding colour note. E2E 27/27. Videos on hold (user).
 
 - 2026-10-05: garden built (002 G1–G3): compressed growth (full look at 6 months), terraced garden + bigger window, automatic move with ceremony, new-seed dialog, flower colour in onboarding, backup v2. Bugs #25–26 found on the ceremony screenshots. Explainer video re-rendered. Vitest 46 × 3 TZ, E2E 26/26.
 

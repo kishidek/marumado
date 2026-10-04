@@ -439,3 +439,20 @@ test('garden: backups carry the garden (schema v2)', async ({ context }, info) =
   expect(backup.schemaVersion).toBe(2);
   expect(backup.garden.moved[0].name).toBe('Hana');
 });
+
+test('garden: Settings lists the garden; texts never use the moved plant’s name for the new seed', async ({ context }) => {
+  test.setTimeout(90_000);
+  const page = await newTab(context);
+  await seedSixMonths(page, { reduceMotion: true });
+  await page.reload();
+  await expect(page.locator('dialog.new-seed')).toBeVisible({ timeout: 10_000 });
+  // While the seed has no name: pill and greeting don't say "Hana".
+  await expect(page.locator('#plantName')).toHaveText('New seed');
+  await expect(page.locator('#greeting')).not.toContainText('Hana');
+  await page.locator('dialog.new-seed .name-input').fill('Yuki');
+  await page.locator('dialog.new-seed button:has-text("Plant the seed")').click();
+  await page.click('#openSettings');
+  await expect(page.locator('#settingsBody')).toContainText('Your garden · 1');
+  await expect(page.locator('#settingsBody .garden-row')).toContainText('Hana');
+  await expect(page.locator('#settingsBody')).toContainText('Generation 2');
+});

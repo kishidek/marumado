@@ -16,8 +16,7 @@ export function initHelp(opts: { plantName: () => string; reduceMotion: () => bo
     $('helpPoints').replaceChildren(
       tile('One quick question', 'on each new tab'),
       tile('Say Yes', `and ${name} grows`),
-      tile('Skip it', 'and it droops'),
-      tile('It never dies', 'care brings it back'),
+      tile('Skip it', 'it droops, but never dies'),
       tile('Only at work', 'no questions after hours'),
       tile('After 6 months', 'it moves to the garden'),
       tile('Stays in this browser', 'back it up in Settings'),
