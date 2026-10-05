@@ -15,7 +15,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
 | Bugs | 27 fixed · 0 open |
 | Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 |
-| Left | Garden: deck videos (G4). Post-MVP: holidays, mood / caffeine habits |
+| Left | Garden: videos (G4, on hold). Post-MVP: holidays, mood / caffeine habits, seasons (parked plan 003) |
 
 ## Phases
 
@@ -126,8 +126,11 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Garden graduation at 6 months, and what comes next | 🟡 | [002 · garden](plans/002-garden.md): G0–G3 ✅ (engine, terraced garden, ceremony, new seed, backup v2); G4 deck videos pending |
 | Holidays / days off beyond weekends | ⬜ |
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
+| Seasons outside the window | ⬜ | Parked: [003 · seasons](plans/003-seasons.md) (options only) |
 
 ## Log
+
+- 2026-10-05: seasons idea parked as plan 003 (draft).
 
 - 2026-10-05: garden UI audit: Settings shows the garden and the current plant's colour/generation; pending-seed texts fixed (#27); garden-aware Start over / Restore; help tiles; onboarding colour note. E2E 27/27. Videos on hold (user).
 
