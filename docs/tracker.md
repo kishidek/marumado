@@ -45,7 +45,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Time bugs (DST, overnight, clock) | ✅ | Vitest × 3 time zones |
 | Answer farming | ✅ | Vitest |
 | Bad restore file | ✅ | Vitest, 6 cases |
-| Context invalidated after update | ✅ | Not possible for an extension page: on update Chrome swaps open Marumado tabs for its default new tab (E2E). Data survives (Chrome storage; confirmed by reloading in Edge) |
+| Context invalidated after update | ✅ | Not possible for an extension page: on update Chrome swaps open Marumado tabs for its default new tab (E2E). Data survives (Chrome storage; confirmed by reloading the extension) |
 | MV3 CSP | ✅ | E2E asserts no console errors on the production build |
 
 ### P1
@@ -73,14 +73,14 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Vacation mode left on forever | ✅ | Toast once a day after 14 days (E2E) |
 | Very old plants | ✅ | Potted plant moves to the garden at 6 months and keeps growing there |
 | Browser zoom 50–200 %, narrow windows | ✅ | Found + fixed: at 200 % / short windows the plant panel covered the Yes/No buttons. Left column now stacks (flex); panel starts collapsed on small screens. E2E checks no overlap at 720×450 and 480×820 |
-| `three` bundle parse time | ✅ | `marumado:first-frame` mark. Apple M1 (Metal): 77–120 ms typical, ~1.3 s for the first tab of a browser session (process + shader warm-up). Software GL: 0.9–2.9 s |
+| `three` bundle parse time | ✅ | `marumado:first-frame` mark. laptop GPU (Metal): 77–120 ms typical, ~1.3 s for the first tab of a browser session (process + shader warm-up). Software GL: 0.9–2.9 s |
 
 ### Found while closing the tracker
 
 | Bug | Status | Notes |
 |---|---|---|
 | A habit added weeks later started at 0 health (penalized for days before it existed) | ✅ | `addedAt` per habit; Vitest |
-| Each tab spent 2 WebGL contexts (support probe + renderer) → "Too many active WebGL contexts" in Edge | ✅ | Probe removed; hidden tabs release after 5 s (was 20 s); release on `pagehide` |
+| Each tab spent 2 WebGL contexts (support probe + renderer) → "Too many active WebGL contexts" in the browser | ✅ | Probe removed; hidden tabs release after 5 s (was 20 s); release on `pagehide` |
 | "WEBGL_lose_context not supported" warning | ✅ | Don't force-lose an already lost context |
 | A late "context lost" event from an old canvas marked the new one as lost | ✅ | Only the live canvas can change state (E2E via light mode) |
 
@@ -128,8 +128,12 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 | Seasons outside the window | ⬜ | Parked: [003 · seasons](plans/003-seasons.md) (options only) |
 | Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R2 ✅ (24 baselines approved); next R3 |
+| Public repo polish | 🟡 | ✅ .gitignore (zips, keys, scratch), machine-specific references removed from docs, README rewritten for visitors, CONTRIBUTING + issue/PR templates, `.nvmrc` + `engines`. ⬜ First GitHub Release with the zip (plan 004 R8) |
+| Project page | ⬜ | Proposal: `apps/marumado` in the playground monorepo → marumado.danielkishimoto.com, listed on playground.danielkishimoto.com. Decisions pending |
 
 ## Log
+
+- 2026-10-05: public repo polish: gitignore, docs scrubbed of machine details, new README, CONTRIBUTING and templates.
 
 - 2026-10-05: user approved the 24 visual baselines and the 4 help clips; R2 done.
 

@@ -1,6 +1,6 @@
 # Docs index
 
-Everything about how Marumado is planned, built and tracked. **Start here.**
+Everything about how Marumado is planned, built and tracked. **Start here.** For users, see the [project README](../README.md); for contributors, [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Read in this order
 

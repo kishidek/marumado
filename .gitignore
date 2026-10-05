@@ -1,20 +1,28 @@
 # Dependencies
 node_modules
 
-# Build output (WXT)
+# Build output: the extension is built into .output/ (npm run build / npm run zip).
+# Prebuilt zips are published as GitHub Releases, not committed.
 .output
 .wxt
+*.zip
+*.crx
 stats.html
 stats-*.json
 web-ext.config.ts
 
-# Other build / test artifacts
+# Extension signing keys: never commit
+*.pem
+
+# Test and render artifacts
 dist
 coverage
 test-results
 playwright-report
+deck-videos/
 
-# Logs
+# Scratch files
+*.tmp*
 logs
 *.log
 npm-debug.log*
@@ -24,14 +32,10 @@ npm-debug.log*
 .env.*
 
 # Editor and OS
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 .idea
 .DS_Store
 *.sw?
 
-# The global "Icon" rule (macOS Icon\r files) also matches this folder on case-insensitive disks.
+# A global "Icon" ignore rule (macOS Icon\r files) would also match this folder on case-insensitive disks.
 !/public/icon/
-
-# Rendered deck videos (large; regenerate with npm run render:deck)
-deck-videos/

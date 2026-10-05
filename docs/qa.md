@@ -78,7 +78,7 @@ Status: ✅ automated · 🟡 partial (unit only, or no assertion on the UI, or 
 | No WebGL | ✅ | E2E |
 | Extension update with tabs open | ✅ | E2E |
 | Session restore (tabs opened in background) | ⬜ | Manual (headless reports all tabs visible) |
-| Installed in Edge and Chrome from the zip | 🟡 | Manual (Edge done) |
+| Installed in Edge and Chrome from the zip | 🟡 | Manual (Edge done; Chrome pending) |
 
 ### Garden
 | Case | Status | Test / note |
@@ -107,7 +107,7 @@ Status: ✅ automated · 🟡 partial (unit only, or no assertion on the UI, or 
 ### Performance
 | Case | Status | Test / note |
 |---|---|---|
-| First 3D frame | 🟡 | Measured (77–120 ms on M1); no budget assertion |
+| First 3D frame | 🟡 | Measured (77–120 ms on a laptop GPU); no budget assertion |
 | Frame cost with 8 garden plants | ⬜ | Manual on a real GPU; automated: builds disposed (memory) |
 
 ## 3. Plant scenarios (visual matrix)

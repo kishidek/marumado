@@ -24,8 +24,8 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 8 | 2026-10-03 | 🔴 | Layout | At 200 % zoom or in short windows the plant panel covered the Yes/No buttons | Zoom / window-size review | `6f9817b` |
 | 9 | 2026-10-04 | 🔴 | Engine | A habit added weeks later started at 0 health | Designing log compaction | `966faaf` |
 | 10 | 2026-10-04 | 🟠 | Engine | A removed and re-added habit counted its old answers again | Fixing #9 | `966faaf` |
-| 11 | 2026-10-04 | 🟠 | WebGL | Each tab used two WebGL contexts → "Too many active WebGL contexts" in Edge | User's Edge error page | `966faaf` |
-| 12 | 2026-10-04 | 🟢 | WebGL | "WEBGL_lose_context extension not supported" warning | User's Edge error page | `966faaf` |
+| 11 | 2026-10-04 | 🟠 | WebGL | Each tab used two WebGL contexts → "Too many active WebGL contexts" in the browser | Browser's extension error page (real use) | `966faaf` |
+| 12 | 2026-10-04 | 🟢 | WebGL | "WEBGL_lose_context extension not supported" warning | Browser's extension error page (real use) | `966faaf` |
 | 13 | 2026-10-04 | 🟠 | WebGL | A late "context lost" event from an old canvas marked the new one as lost | E2E (light mode) | `966faaf` |
 | 14 | 2026-10-04 | 🔴 | Engine / Settings | Changing work hours or workdays rewrote the plant's past | Settings review | `e81f7e9` |
 | 15 | 2026-10-04 | 🔴 | Engine / Settings | Changing a habit's interval re-read old answers | Settings review | `e81f7e9` |
@@ -49,7 +49,7 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 
 ### 1. Extension icons not tracked by git
 - **Symptom:** `public/icon/*.png` didn't show up in `git status`; the public repo would have shipped without icons.
-- **Cause:** the user's global gitignore has an `Icon` rule (for macOS `Icon\r` files); on a case-insensitive disk it also matched the `icon/` folder.
+- **Cause:** a global gitignore with an `Icon` rule (common on macOS, for `Icon\r` files); on a case-insensitive disk it also matched the `icon/` folder.
 - **Fix:** project `.gitignore` re-includes `/public/icon/` (global config untouched).
 - **Guard:** the folder is now tracked; a missing icon would show in the build output listing.
 
@@ -108,16 +108,16 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 - **Guard:** covered by the checkpoint equivalence tests (habit with `addedAt`).
 
 ### 11. Each tab used two WebGL contexts
-- **Symptom:** Edge's extension error page listed "WARNING: Too many active WebGL contexts. Oldest context will be lost." after normal use.
+- **Symptom:** The browser's extension error page listed "WARNING: Too many active WebGL contexts. Oldest context will be lost." after normal use.
 - **Cause:** a "does this browser support WebGL?" probe created a context on every tab on top of the real one (lost contexts can still count until garbage-collected); hidden tabs also kept theirs for 20 s.
 - **Fix:** no probe (the renderer itself reports failure); hidden tabs release after 5 s and on `pagehide`.
-- **Guard:** E2E "20 open tabs … recovers on return" and "without WebGL". Watch Edge's error page during real use.
+- **Guard:** E2E "20 open tabs … recovers on return" and "without WebGL". Watch the browser's extension error page during real use.
 
 ### 12. "WEBGL_lose_context extension not supported" warning
-- **Symptom:** a three.js warning in Edge's error page.
+- **Symptom:** a three.js warning in the browser's extension error page.
 - **Cause:** releasing a context that the browser had already taken away still asked it to "lose" itself.
 - **Fix:** only force the loss on a live context.
-- **Guard:** E2E runs with console errors collected; Edge error page.
+- **Guard:** E2E runs with console errors collected; extension error page.
 
 ### 13. A late "context lost" event marked the new context as lost
 - **Symptom:** after turning on Light mode (or coming back quickly to a just-released tab), the 3D could be shown as lost, falling back to the CSS window.
@@ -177,7 +177,7 @@ Enter saves Rename; exported filenames fall back to `plant` for non-Latin names;
 - **Symptom:** the plant's flight through the window was hidden: the dialog appeared ~0.5 s after it started.
 - **Cause:** saving the move triggers a storage-watch re-render; at that moment the page didn't know a ceremony was starting, so it opened the dialog.
 - **Fix:** a `moving` flag is set *before* saving and cleared when the flight lands; the dialog waits for it.
-- **Guard:** visual check of the ceremony (`.output/TEMP - garden-move/`); E2E "garden: at 6 months…" waits for the dialog after the flight.
+- **Guard:** visual check of the ceremony (screenshots of the ceremony); E2E "garden: at 6 months…" waits for the dialog after the flight.
 
 ### 26. The moving plant flashed in the garden before taking off
 - **Symptom:** for a frame the plant was already standing on the hill and also about to fly.
