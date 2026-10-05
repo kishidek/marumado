@@ -156,3 +156,9 @@ Decided with the user: four steps with looping clips of the real scene (1A card 
 - Clips: `npm run render:help` (`tests/e2e/clips/help-clips.spec.ts`, Playwright project `clips`), frame-exact from the dev build with `__marumado.frame`, `set`, `cheer`, `garden` and `fly`; VP9 WebM + JPEG stills for reduce motion; review copies (MP4) in `.output/TEMP - help-clips/`. ~1.6 MB with stills.
 - The old explainer video and its script were removed.
 - Guards: functional E2E "help modal: four steps…" and visual S22 (step 4, stills).
+
+## 11. Stable extension ID (decided 2026-10-05)
+
+Unpacked extensions get an ID derived from their folder path, and their storage follows the ID: unzipping a new release elsewhere would silently lose the plant. The manifest now carries a public `key`, pinning the ID to `libfkdleonljckjnpocjmkoccmafebmb` (E2E guards it). The private key lives outside the repo (author's machine, `*.pem` is gitignored). The Chrome Web Store rejects the `key` field: strip it for a store upload if we publish there later.
+
+Migration for existing installs (the author's): export a backup, update, restore.

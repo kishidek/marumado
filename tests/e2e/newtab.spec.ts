@@ -464,3 +464,8 @@ test('garden: Settings lists the garden; texts never use the moved plant’s nam
   await expect(page.locator('#settingsBody .garden-row')).toContainText('Hana');
   await expect(page.locator('#settingsBody')).toContainText('Generation 2');
 });
+
+test('the extension ID is pinned by the manifest key (updates keep their data)', async ({ context }) => {
+  const page = await newTab(context);
+  expect(new URL(page.url()).host).toBe('libfkdleonljckjnpocjmkoccmafebmb');
+});

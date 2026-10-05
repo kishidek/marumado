@@ -133,6 +133,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
 ## Log
 
+- 2026-10-05: manifest key pins the extension ID (unpacked updates keep their data); install path A (Releases zip) chosen.
+
 - 2026-10-05: plan 005 project page: built on a playground branch, not deployed yet.
 
 - 2026-10-05: public repo polish: gitignore, docs scrubbed of machine details, new README, CONTRIBUTING and templates.
