@@ -43,7 +43,7 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 27 | 2026-10-05 | 🟠 | Garden | While the new seed waited for its name, greeting, toasts and help still used the moved plant's name | Garden UI audit | `c1fb6a3` |
 | 28 | 2026-10-05 | 🟠 | Garden | The lantern stood on a plant slot and was swallowed as that plant kept growing | Visual baseline S14 | `e5abc33` |
 | 29 | 2026-10-05 | 🟠 | Tests | A 1 % screenshot tolerance let a moved lantern pass as "no change" | Comparing lantern options | `e5abc33` |
-| 30 | 2026-10-05 | 🟠 | Garden | During the move the plant flew out of the top of the screen and floated over the hill | User review of baseline S08 | (this commit) |
+| 30 | 2026-10-05 | 🟠 | Garden | During the move the plant flew out of the top of the screen and floated over the hill | User review of baseline S08 | `cd256e9` |
 
 ## Details
 
