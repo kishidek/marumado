@@ -13,7 +13,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | P1 risks | 11 / 11 ✅ |
 | P2 risks | 6 / 6 ✅ |
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
-| Bugs | 29 fixed · 0 open |
+| Bugs | 30 fixed · 0 open |
 | Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 · visual regression 24 scenes · coverage and gaps: [qa.md](qa.md) |
 | Left | **Release readiness (plan 004, next)**. Garden videos (G4, on hold). Post-MVP: holidays, mood / caffeine habits, seasons (parked plan 003) |
 
@@ -130,6 +130,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R1 ✅; R2 baselines done, user review pending; next R3 |
 
 ## Log
+
+- 2026-10-05: user review of baselines: S08 flight fixed (#30); S22 help content to be redesigned.
 
 - 2026-10-05: plan 004 R1–R2: visual harness + 24 scene baselines (pixel-deterministic, 50 px tolerance). Bugs #28 (lantern swallowed by a plant) and #29 (1 % tolerance too loose) fixed.
 

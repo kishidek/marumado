@@ -43,6 +43,7 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 27 | 2026-10-05 | 🟠 | Garden | While the new seed waited for its name, greeting, toasts and help still used the moved plant's name | Garden UI audit | `c1fb6a3` |
 | 28 | 2026-10-05 | 🟠 | Garden | The lantern stood on a plant slot and was swallowed as that plant kept growing | Visual baseline S14 | `e5abc33` |
 | 29 | 2026-10-05 | 🟠 | Tests | A 1 % screenshot tolerance let a moved lantern pass as "no change" | Comparing lantern options | `e5abc33` |
+| 30 | 2026-10-05 | 🟠 | Garden | During the move the plant flew out of the top of the screen and floated over the hill | User review of baseline S08 | (this commit) |
 
 ## Details
 
@@ -201,3 +202,9 @@ Enter saves Rename; exported filenames fall back to `plant` for non-Latin names;
 - **Cause:** `maxDiffPixelRatio: 0.01` (≈ 10,000 px at 1280×800).
 - **Fix:** rendering proved pixel-deterministic (0 px drift over two full runs), so the tolerance is now `maxDiffPixels: 50`.
 - **Guard:** two zero-tolerance runs recorded in plan 004.
+
+### 30. The moving plant flew off-screen and floated in the sky
+- **Symptom:** mid-flight the plant was at the top edge of the view, above the window, then floated down over the hill (baseline S08).
+- **Cause:** (1) the camera started easing to the close-up on the new sprout as soon as the move was saved, so the full-size plant no longer fit; (2) the path was a straight line plus a 0.55 m arc, which went over the window instead of through it.
+- **Fix:** the scene holds the wide framing while the plant flies (`holdFraming`) and eases in on the sprout after landing; the path now lifts 18 cm out of the pot, then follows a Bézier curve through the lower middle of the round window down onto the slot (3 s).
+- **Guard:** baseline S08 (mid-flight frame).

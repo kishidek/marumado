@@ -210,6 +210,7 @@ async function maybeMoveToGarden() {
   const generation = before.moved.length;
   const flyHealth = shownHealth ?? targetHealth();
   moving = true;
+  if (!reduceMotion()) view.holdFraming(true); // the wide view stays while the plant flies
   const moved = await moveToGardenIfDue().catch((err: unknown) => {
     storageFailed(err);
     return null;
@@ -218,6 +219,7 @@ async function maybeMoveToGarden() {
   if (!plantMoved || reduceMotion()) {
     // Not due on the stored data (another tab did it), or no animation wanted.
     moving = false;
+    view.holdFraming(false);
     render();
     return;
   }

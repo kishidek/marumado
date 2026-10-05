@@ -23,6 +23,8 @@ export interface WindowScene {
    * round window and lands on `slot`; then `done` runs. The camera eases throughout.
    */
   flyToGarden(flyer: AjisaiBuild, slot: number, done: () => void): void;
+  /** Keep the current framing until the flight lands (the potted plant changes size underneath). */
+  holdFraming(on: boolean): void;
 }
 
 /** Smooth 1D value noise from a few sines: cheap, deterministic, good enough for ridgelines. */
@@ -167,9 +169,14 @@ export function createWindowScene(): WindowScene {
   const goal = { pos: new THREE.Vector3(), target: new THREE.Vector3(), set: false };
   let easing = false;
 
-  type Flight = { flyer: AjisaiBuild; from: THREE.Vector3; to: THREE.Vector3; t: number; done: () => void };
+  type Flight = { flyer: AjisaiBuild; from: THREE.Vector3; via: THREE.Vector3; to: THREE.Vector3; t: number; done: () => void };
   let flight: Flight | null = null;
-  const FLIGHT_S = 2.4;
+  const FLIGHT_S = 3;
+  /** Lift out of the pot during the first part of the flight (m, share of the flight). */
+  const LIFT = { height: 0.18, share: 0.22 };
+  /** While a flight runs the camera keeps the wide view; it eases in on the new sprout after landing. */
+  let holdFraming = false;
+  const ease = (x: number) => x * x * (3 - 2 * x);
 
   function frame(instant = true) {
     camera.aspect = size.w / size.h;
@@ -215,16 +222,27 @@ export function createWindowScene(): WindowScene {
   function stepFlight(dt: number) {
     if (!flight) return false;
     flight.t = Math.min(1, flight.t + dt / FLIGHT_S);
-    const e = flight.t * flight.t * (3 - 2 * flight.t);
-    const p = flight.from.clone().lerp(flight.to, e);
-    p.y += Math.sin(Math.PI * e) * 0.55; // arc up through the window
+    const { from, via, to } = flight;
+    const lifted = from.clone().add(new THREE.Vector3(0, LIFT.height, 0));
+    let p: THREE.Vector3;
+    if (flight.t < LIFT.share) {
+      // 1. Rise gently out of the pot.
+      p = from.clone().lerp(lifted, ease(flight.t / LIFT.share));
+    } else {
+      // 2. Glide out through the middle of the round window and down onto the slot
+      //    (quadratic Bézier with its control point in the window opening).
+      const u = ease((flight.t - LIFT.share) / (1 - LIFT.share));
+      p = lifted.clone().multiplyScalar((1 - u) ** 2).addScaledVector(via, 2 * u * (1 - u)).addScaledVector(to, u * u);
+    }
     flight.flyer.group.position.copy(p);
-    flight.flyer.group.rotation.y = e * Math.PI * 0.8;
+    flight.flyer.group.rotation.y = ease(flight.t) * Math.PI * 0.6;
     if (flight.t >= 1) {
       scene.remove(flight.flyer.group);
       flight.flyer.dispose();
       const done = flight.done;
       flight = null;
+      holdFraming = false;
+      frame(false); // now ease in on the new sprout
       done();
     }
     return true;
@@ -268,16 +286,21 @@ export function createWindowScene(): WindowScene {
       build.group.position.copy(PLANT_SPOT);
       scene.add(build.group);
       // A big framing change (new seed after a move) eases; daily growth and health just snap.
-      frame(!growing || Math.abs(camera.position.z - goal.pos.z) < 0.05 || !goal.set);
+      if (!holdFraming) frame(!growing || Math.abs(camera.position.z - goal.pos.z) < 0.05 || !goal.set);
     },
     setGarden(plants) {
       garden.setPlants(plants);
     },
     flyToGarden(flyer, slot, done) {
-      const from = PLANT_SPOT.clone().add(new THREE.Vector3(0, 0.12, 0));
+      const from = PLANT_SPOT.clone().add(new THREE.Vector3(0, 0.1, 0));
+      // Through the lower middle of the opening: the plant (≈0.6 m tall) stays inside the circle.
+      const via = new THREE.Vector3(MARUMADO.x, 0.12, -0.9);
       flyer.group.position.copy(from);
       scene.add(flyer.group);
-      flight = { flyer, from, to: garden.slotPosition(slot), t: 0, done };
+      flight = { flyer, from, via, to: garden.slotPosition(slot), t: 0, done };
+    },
+    holdFraming(on) {
+      holdFraming = on;
     },
     cheer(kind) {
       feedback.play(kind, () => (plant ? { group: plant.group, height: plant.height, potRadius: plant.potRadius } : null));
