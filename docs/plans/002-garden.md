@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Active** · G0–G3 done (2026-10-05): the garden works in the extension; G4 left (deck videos) |
+| **Status** | **Active** · G0–G3 done; G4: help clips ✅ (approved), deck videos left |
 | **Created** | 2026-10-04 |
 | **Updated** | 2026-10-05 |
 | **Supersedes** | — (extends [001 · MVP](001-mvp-wxt.md), "post-MVP: garden graduation") |

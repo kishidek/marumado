@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Active** · R1 ✅; R2 under review: S08 fixed (#30), S22 redesigned (help modal with clips); waiting for final approval |
+| **Status** | **Active** · R0–R2 ✅ (24 baselines approved by the user 2026-10-05); next R3 |
 | **Created** | 2026-10-05 |
 | **Updated** | 2026-10-05 |
 | **Supersedes** | — |
@@ -64,7 +64,7 @@ Validated against the code and with a probe on the real extension (2026-10-05): 
 |---|---|---|---|
 | R0 | Plan | This document; qa.md | ✅ 2026-10-05 |
 | R1 | **Visual harness** | Playwright projects (`functional` / `visual`) + `npm run test:visual`; dev-build fixture with `timezoneId` and frozen clock; `seedScenario()` (generalises `seed` + `seedSixMonths`, timestamps from the frozen `now`); screenshot options; contact-sheet script into `.output/TEMP - visual-baselines/` | ✅ 2026-10-05: pilots stable over 3 runs; all 24 scenes then 0 px drift over 2 runs |
-| R2 | **24 scenario baselines** | One test per S01–S24 (table in §6); review sheet; fix anything that looks wrong (logged in bugs.md) | 🟡 24 baselines committed; bug #28 (lantern) found and fixed; **user review of the sheet pending** |
+| R2 | **24 scenario baselines** | One test per S01–S24 (table in §6); review sheet; fix anything that looks wrong (logged in bugs.md) | ✅ 2026-10-05: 24 baselines approved; review fixed #28 (lantern), #30 (flight) and redesigned the help modal (§10) |
 | R3 | **On-screen assertions for engine-only cases** | Off-hours / weekend; vacation greeting; daily cap; overnight shift; "Almost ready"; anti-farming toast; Later toast + snooze | Each listed case ✅ in qa.md §2 |
 | R4 | **Garden edge cases** | Escape can't dismiss the new-seed dialog; light mode ≤ 3 garden plants; Start over erases the garden; restoring a pre-move backup; 9th plant takes slot 0 on screen | All ✅ |
 | R5 | **Onboarding and Settings limits** | Start = end and no workdays in onboarding; max 5 / min 1 habit; Enter renames; onboarding colour reaches the state; closing mid-onboarding saves nothing; "Download backup & erase" downloads then erases; restore v1 and newer-schema files from the UI | All ✅ |

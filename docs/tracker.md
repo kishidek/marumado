@@ -2,7 +2,7 @@
 
 **Living document.** Status of every plan in [plans/](plans/) (phases and risks come from [001 · MVP](plans/001-mvp-wxt.md)); updated with every change. Bugs: [bugs.md](bugs.md). Index of all docs: [README.md](README.md).
 
-## Summary (2026-10-05)
+## Summary (2026-10-05, late)
 
 Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 
@@ -14,8 +14,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | P2 risks | 6 / 6 ✅ |
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
 | Bugs | 30 fixed · 0 open |
-| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 · visual regression 24 scenes · coverage and gaps: [qa.md](qa.md) |
-| Left | **Release readiness (plan 004, next)**. Garden videos (G4, on hold). Post-MVP: holidays, mood / caffeine habits, seasons (parked plan 003) |
+| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 · visual regression 24 scenes (approved) · coverage and gaps: [qa.md](qa.md) |
+| Left | **Release readiness (plan 004: R3–R8)** · public repo polish (gitignore, README, project page) · garden deck videos (G4). Post-MVP: holidays, mood / caffeine habits, seasons (parked plan 003) |
 
 ## Phases
 
@@ -127,9 +127,11 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Holidays / days off beyond weekends | ⬜ |
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 | Seasons outside the window | ⬜ | Parked: [003 · seasons](plans/003-seasons.md) (options only) |
-| Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R1 ✅; R2 baselines done, user review pending; next R3 |
+| Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R2 ✅ (24 baselines approved); next R3 |
 
 ## Log
+
+- 2026-10-05: user approved the 24 visual baselines and the 4 help clips; R2 done.
 
 - 2026-10-05: help modal redesigned: intro on healthy habits, 4 steps with looping clips of the real scene (incl. move + garden), credit link with UTMs; old explainer removed.
 
