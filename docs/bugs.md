@@ -41,8 +41,8 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 25 | 2026-10-05 | 🟠 | Garden | New-seed dialog opened over the move ceremony | Screenshots of the ceremony | `7a01c5d` |
 | 26 | 2026-10-05 | 🟢 | Garden | The moving plant flashed in its garden slot before taking off | Same review | `7a01c5d` |
 | 27 | 2026-10-05 | 🟠 | Garden | While the new seed waited for its name, greeting, toasts and help still used the moved plant's name | Garden UI audit | `c1fb6a3` |
-| 28 | 2026-10-05 | 🟠 | Garden | The lantern stood on a plant slot and was swallowed as that plant kept growing | Visual baseline S14 | (this commit) |
-| 29 | 2026-10-05 | 🟠 | Tests | A 1 % screenshot tolerance let a moved lantern pass as "no change" | Comparing lantern options | (this commit) |
+| 28 | 2026-10-05 | 🟠 | Garden | The lantern stood on a plant slot and was swallowed as that plant kept growing | Visual baseline S14 | `e5abc33` |
+| 29 | 2026-10-05 | 🟠 | Tests | A 1 % screenshot tolerance let a moved lantern pass as "no change" | Comparing lantern options | `e5abc33` |
 
 ## Details
 
