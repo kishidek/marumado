@@ -148,14 +148,19 @@ export async function sceneContext(now: number, opts: { viewport?: { width: numb
 }
 
 /** Opens the new tab, writes the scene's data, reloads, and waits until the page has settled. */
-export async function openScene(context: BrowserContext, data: ReturnType<typeof buildScenario> | null, pill: 'collapsed' | 'expanded' = 'collapsed'): Promise<Page> {
+export async function openScene(
+  context: BrowserContext,
+  data: ReturnType<typeof buildScenario> | null,
+  pill: 'collapsed' | 'expanded' = 'collapsed',
+  query = '',
+): Promise<Page> {
   const page = await context.newPage();
   await page.goto('chrome://newtab/');
   await page.waitForURL(/newtab\.html/);
   await expect(page.locator('#scene')).toHaveAttribute('data-gl', /.+/);
   if (data) {
     await page.evaluate((d) => chrome.storage.local.set(d), data);
-    await page.reload();
+    await page.goto(page.url().split('?')[0] + query);
     await expect(page.locator('#plantName')).not.toBeEmpty();
   }
   await settle(page, pill);

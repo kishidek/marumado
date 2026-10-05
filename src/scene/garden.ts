@@ -69,7 +69,7 @@ const SPEC: LayoutSpec = {
       { x: -2.6, z: -2.4 }, // 8: front lawn, far left
     ],
     stones: [[-0.15, -1.7], [0.15, -2.2], [-0.05, -3.0], [0.2, -3.5]],
-    lantern: [-1.15, -3.1],
+    lantern: [-1.85, -6.3], // back-left: clear of every plant slot (bug #28)
 };
 
 

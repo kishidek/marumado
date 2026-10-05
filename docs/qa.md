@@ -10,7 +10,7 @@ Status: ✅ automated · 🟡 partial (unit only, or no assertion on the UI, or 
 |---|---|---|---|
 | Vitest (engine) | `tests/engine/*.test.ts`, run in 3 time zones (`npm run test:tz`) | 42 tests (46 with cases) | Model, scheduler, time/DST, settings changes, checkpoints, backup, simulator, garden |
 | Playwright E2E | `tests/e2e/newtab.spec.ts` on the real unpacked build (`npm run test:e2e`) | 27 | Onboarding, answering, multi-tab, settings, backup, WebGL loss/fallback, layout, garden |
-| Visual regression | — | **0** | Visuals were validated by eye from screenshots (`.output/TEMP - …`) |
+| Visual regression | `tests/e2e/visual/` on the dev build (`npm run test:visual`) | **24 scenes** (S01–S24) | Frozen Tokyo clock, 50 px tolerance; review with `npm run visual:sheet` |
 
 ## 2. Common and edge cases
 
@@ -118,30 +118,30 @@ The full product is thousands of combinations; this list covers every value of e
 
 | # | Habits / health | Growth | Garden | Time | Mode / viewport | UI state | Status |
 |---|---|---|---|---|---|---|---|
-| S01 | — | — | — | 11 h | 1440 | Onboarding: name + colour | 🟡 screenshot |
-| S02 | Healthy | Day 0 | 0 | 11 h | 1440 | Card | 🟡 |
-| S03 | Healthy | 2 w | 0 | 7 h | 1440 | Card | ⬜ |
-| S04 | Thirsty | 6 w | 0 | 18 h | 1440 | Card + pill expanded | ⬜ |
-| S05 | Wilted | 3 mo | 0 | 22 h | 1440 | Caught up | ⬜ |
-| S06 | One habit low | 3 mo | 0 | 11 h | 1440 | Pill collapsed (low dot) | ⬜ |
-| S07 | Healthy | ~5.5 mo ("almost") | 0 | 11 h | 1440 | Pill "Almost ready" | ⬜ |
-| S08 | Healthy | Moving day (flight) | 0 → 1 | 11 h | 1440 | Ceremony mid-flight | 🟡 |
-| S09 | Healthy | Pending seed | 1 | 11 h | 1440 | New-seed dialog | 🟡 |
-| S10 | Healthy | Day 1 (gen 2) | 1 | 3 h | 1440 | Card, night | 🟡 |
-| S11 | Thirsty | 6 w (gen 3) | 2 | 11 h | 1440 | Garden dull (soft health) | ⬜ |
-| S12 | Healthy | 3 mo (gen 5) | 4 | 18 h | 1440 | Card | 🟡 lab only |
-| S13 | Healthy | 5 mo (gen 9) | 8 | 11 h | 1440 | Settings: garden list | 🟡 |
-| S14 | Healthy | 2 w (gen 10) | 9+ (slot reuse) | 11 h | 1440 | Card | ⬜ |
-| S15 | Wilted / dormant (away 2 weeks) | 3 mo | 2 | 11 h | 1440 | Card | ⬜ |
-| S16 | Healthy | 3 mo | 2 | 22 h | Off-hours | No card, "resting" | ⬜ |
-| S17 | Healthy | 3 mo | 2 | 11 h | Vacation | Greeting, no card | ⬜ |
-| S18 | Healthy | 3 mo | 8 | 11 h | Light mode | ≤ 3 garden plants | ⬜ |
-| S19 | Healthy | 3 mo | 2 | 11 h | No WebGL | CSS window | ✅ (E2E, no snapshot) |
-| S20 | Healthy | 3 mo | 2 | 11 h | 720×450 (200 %) | Card + pill | ✅ overlap check, no snapshot |
-| S21 | Healthy | 6 w | 1 | 11 h | 480×820 | Card + pill | 🟡 |
-| S22 | Healthy | 3 mo | 2 | 11 h | 1440 | Help modal (video) | 🟡 |
-| S23 | Healthy | Moving day | 0 → 1 | 11 h | Reduce motion | Dialog directly | ✅ (E2E, no snapshot) |
-| S24 | Wilted | 5 mo (gen 2) | 1 | 18 h | 1440 | Garden + wilted pot side by side | ⬜ |
+| S01 | — | — | — | 11 h | 1440 | Onboarding: name + colour | ✅ baseline (review pending) |
+| S02 | Healthy | Day 0 | 0 | 11 h | 1440 | Card | ✅ baseline (review pending) |
+| S03 | Healthy | 2 w | 0 | 7 h | 1440 | Card | ✅ baseline (review pending) |
+| S04 | Thirsty | 6 w | 0 | 18 h | 1440 | Card + pill expanded | ✅ baseline (review pending) |
+| S05 | Wilted | 3 mo | 0 | 22 h | 1440 | Caught up | ✅ baseline (review pending) |
+| S06 | One habit low | 3 mo | 0 | 11 h | 1440 | Pill collapsed (low dot) | ✅ baseline (review pending) |
+| S07 | Healthy | ~5.5 mo ("almost") | 0 | 11 h | 1440 | Pill "Almost ready" | ✅ baseline (review pending) |
+| S08 | Healthy | Moving day (flight) | 0 → 1 | 11 h | 1440 | Ceremony mid-flight | ✅ baseline (review pending) |
+| S09 | Healthy | Pending seed | 1 | 11 h | 1440 | New-seed dialog | ✅ baseline (review pending) |
+| S10 | Healthy | Day 1 (gen 2) | 1 | 3 h | 1440 | Card, night | ✅ baseline (review pending) |
+| S11 | Thirsty | 6 w (gen 3) | 2 | 11 h | 1440 | Garden dull (soft health) | ✅ baseline (review pending) |
+| S12 | Healthy | 3 mo (gen 5) | 4 | 18 h | 1440 | Card | ✅ baseline (review pending) |
+| S13 | Healthy | 5 mo (gen 9) | 8 | 11 h | 1440 | Settings: garden list | ✅ baseline (review pending) |
+| S14 | Healthy | 2 w (gen 10) | 9+ (slot reuse) | 11 h | 1440 | Card | ✅ baseline (review pending) |
+| S15 | Wilted / dormant (away 2 weeks) | 3 mo | 2 | 11 h | 1440 | Card | ✅ baseline (review pending) |
+| S16 | Healthy | 3 mo | 2 | 22 h | Off-hours | No card, "resting" | ✅ baseline (review pending) |
+| S17 | Healthy | 3 mo | 2 | 11 h | Vacation | Greeting, no card | ✅ baseline (review pending) |
+| S18 | Healthy | 3 mo | 8 | 11 h | Light mode | ≤ 3 garden plants | ✅ baseline (review pending) |
+| S19 | Healthy | 3 mo | 2 | 11 h | No WebGL | CSS window | ✅ baseline (review pending) |
+| S20 | Healthy | 3 mo | 2 | 11 h | 720×450 (200 %) | Card + pill | ✅ baseline (review pending) |
+| S21 | Healthy | 6 w | 1 | 11 h | 480×820 | Card + pill | ✅ baseline (review pending) |
+| S22 | Healthy | 3 mo | 2 | 11 h | 1440 | Help modal (video) | ✅ baseline (review pending) |
+| S23 | Healthy | Moving day | 0 → 1 | 11 h | Reduce motion | Dialog directly | ✅ baseline (review pending) |
+| S24 | Wilted | 5 mo (gen 2) | 1 | 18 h | 1440 | Garden + wilted pot side by side | ✅ baseline (review pending) |
 
 ## 4. Gaps to close before sharing (priority)
 

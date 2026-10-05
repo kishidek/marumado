@@ -96,7 +96,7 @@ addEventListener('resize', resize);
 
 let lastFrame = performance.now();
 /** Dev-only: when a render script drives frames itself (scripts/render-deck.mjs). */
-let manualClock = false;
+let manualClock = DEV && params.get('manual') === '1'; // visual tests step frames themselves
 function loop(now: number) {
   requestAnimationFrame(loop);
   if (manualClock) return;

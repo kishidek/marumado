@@ -41,6 +41,8 @@ Severity: 🔴 broke a core flow or data · 🟠 visible / confusing · 🟢 min
 | 25 | 2026-10-05 | 🟠 | Garden | New-seed dialog opened over the move ceremony | Screenshots of the ceremony | `7a01c5d` |
 | 26 | 2026-10-05 | 🟢 | Garden | The moving plant flashed in its garden slot before taking off | Same review | `7a01c5d` |
 | 27 | 2026-10-05 | 🟠 | Garden | While the new seed waited for its name, greeting, toasts and help still used the moved plant's name | Garden UI audit | `c1fb6a3` |
+| 28 | 2026-10-05 | 🟠 | Garden | The lantern stood on a plant slot and was swallowed as that plant kept growing | Visual baseline S14 | (this commit) |
+| 29 | 2026-10-05 | 🟠 | Tests | A 1 % screenshot tolerance let a moved lantern pass as "no change" | Comparing lantern options | (this commit) |
 
 ## Details
 
@@ -187,3 +189,15 @@ Enter saves Rename; exported filenames fall back to `plant` for non-Latin names;
 - **Cause:** the stored plant name only changes when the new seed is named; those texts read it directly.
 - **Fix:** one label for the current plant (`plantLabel()`): "your new seed" while pending, the name otherwise.
 - **Guard:** E2E "garden: Settings lists the garden; texts never use the moved plant's name for the new seed".
+
+### 28. The lantern was swallowed by a garden plant
+- **Symptom:** in S14 (garden full, oldest plants large) the lantern stood inside the pink plant on the middle terrace.
+- **Cause:** the lantern sat 0.32 m from slot 2; garden plants keep growing, so the oldest one engulfed it.
+- **Fix:** lantern moved to the back-left (−1.85, −6.3), ≥ 1.18 m from every slot. Three positions were compared; the others fell outside the round window.
+- **Guard:** visual baselines S02 (empty garden) and S14 (full garden).
+
+### 29. Screenshot tolerance too loose
+- **Symptom:** while comparing lantern positions, Playwright kept the old images: a moved lantern changed < 1 % of the pixels.
+- **Cause:** `maxDiffPixelRatio: 0.01` (≈ 10,000 px at 1280×800).
+- **Fix:** rendering proved pixel-deterministic (0 px drift over two full runs), so the tolerance is now `maxDiffPixels: 50`.
+- **Guard:** two zero-tolerance runs recorded in plan 004.

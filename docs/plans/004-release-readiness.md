@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Active** · planned and reviewed against the code 2026-10-05; nothing built yet (next: R1) |
+| **Status** | **Active** · R1 ✅; R2 baselines generated, **waiting for the user's review** of the sheet |
 | **Created** | 2026-10-05 |
 | **Updated** | 2026-10-05 |
 | **Supersedes** | — |
@@ -52,7 +52,7 @@ Validated against the code and with a probe on the real extension (2026-10-05): 
   - **Help video:** it has `preload="none"` and doesn't play with reduce motion, so it would be blank: the test loads it and seeks to a fixed time (e.g. 4.8 s, the wilted frame) before the snapshot.
   - **Flight (S08):** motion on, `__marumado.manual(true)` then `frame(dt)` steps to a fixed point of the flight.
   - **Renderer:** SwiftShader as today.
-- **Assertion:** `expect(page).toHaveScreenshot('S07.png', { maxDiffPixelRatio: 0.01, animations: 'disabled' })` (threshold tuned in R1).
+- **Assertion:** `expect(page).toHaveScreenshot('S07.png')` with project defaults `maxDiffPixels: 50, animations: 'disabled'`. Tuned in R1: rendering is pixel-deterministic (0 px over 2 runs); the planned 1 % ratio missed a moved lantern (bug #29).
 - **Viewport:** **1280×800** by default (smaller baselines); S20 720×450 and S21 480×820.
 - **Platform:** text uses system fonts besides the bundled Shippori Mincho, so baselines are **per OS**. Playwright already names them per platform (`…-chromium-darwin.png`); we keep macOS baselines only and run visual tests on macOS.
 - **Baselines:** stored next to the spec (`tests/e2e/visual.spec.ts-snapshots/`), committed. First run generates them; they're reviewed by eye on a contact sheet in `.output/TEMP - visual-baselines/` and approved by the user before committing.
@@ -63,8 +63,8 @@ Validated against the code and with a probe on the real extension (2026-10-05): 
 | # | Phase | Tasks | Done when |
 |---|---|---|---|
 | R0 | Plan | This document; qa.md | ✅ 2026-10-05 |
-| R1 | **Visual harness** | Playwright projects (`functional` / `visual`) + `npm run test:visual`; dev-build fixture with `timezoneId` and frozen clock; `seedScenario()` (generalises `seed` + `seedSixMonths`, timestamps from the frozen `now`); screenshot options; contact-sheet script into `.output/TEMP - visual-baselines/` | 3 pilot scenes (S02, S05, S13) stable over 3 consecutive runs (no diffs) |
-| R2 | **24 scenario baselines** | One test per S01–S24 (table in §6); review sheet; fix anything that looks wrong (logged in bugs.md) | User approves the sheet; baselines committed; qa.md §3 all ✅ |
+| R1 | **Visual harness** | Playwright projects (`functional` / `visual`) + `npm run test:visual`; dev-build fixture with `timezoneId` and frozen clock; `seedScenario()` (generalises `seed` + `seedSixMonths`, timestamps from the frozen `now`); screenshot options; contact-sheet script into `.output/TEMP - visual-baselines/` | ✅ 2026-10-05: pilots stable over 3 runs; all 24 scenes then 0 px drift over 2 runs |
+| R2 | **24 scenario baselines** | One test per S01–S24 (table in §6); review sheet; fix anything that looks wrong (logged in bugs.md) | 🟡 24 baselines committed; bug #28 (lantern) found and fixed; **user review of the sheet pending** |
 | R3 | **On-screen assertions for engine-only cases** | Off-hours / weekend; vacation greeting; daily cap; overnight shift; "Almost ready"; anti-farming toast; Later toast + snooze | Each listed case ✅ in qa.md §2 |
 | R4 | **Garden edge cases** | Escape can't dismiss the new-seed dialog; light mode ≤ 3 garden plants; Start over erases the garden; restoring a pre-move backup; 9th plant takes slot 0 on screen | All ✅ |
 | R5 | **Onboarding and Settings limits** | Start = end and no workdays in onboarding; max 5 / min 1 habit; Enter renames; onboarding colour reaches the state; closing mid-onboarding saves nothing; "Download backup & erase" downloads then erases; restore v1 and newer-schema files from the UI | All ✅ |
@@ -116,7 +116,7 @@ Health words below are what the scene **shows**, produced by an explicit history
 | # | Decision | Recommendation |
 |---|---|---|
 | 1 | Commit the baseline images to the public repo? (~24 PNGs, a few MB) | **Yes**: without them the visual tests can't run anywhere else |
-| 2 | Pixel-diff threshold | Start at 1 % of pixels; tune in R1 so 3 runs in a row pass |
+| 2 | Pixel-diff threshold | ~~1 %~~ → **50 px** (decided in R1, see bug #29) |
 | 3 | Version to tag when R8 passes | `v0.2.0` (MVP + garden) |
 
 ## 8. Risks

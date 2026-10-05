@@ -10,7 +10,9 @@ export default defineConfig({
   timeout: 45_000,
   workers: 1,
   reporter: 'list',
-  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled' } },
+  // Rendering is pixel-deterministic (0 px drift over 2 runs, 2026-10-05). A 1 % ratio let a moved
+  // lantern pass unnoticed (bug #29), so the margin is a fixed, tiny pixel count.
+  expect: { toHaveScreenshot: { maxDiffPixels: 50, animations: 'disabled' } },
   projects: [
     { name: 'functional', testIgnore: /visual\/.*/ },
     { name: 'visual', testMatch: /visual\/.*\.spec\.ts/ },
