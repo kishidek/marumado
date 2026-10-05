@@ -20,6 +20,7 @@ Everything about how Marumado is planned, built and tracked. **Start here.** For
 | [plans/002-garden.md](plans/002-garden.md) | Plan | **Active** | 2026-10-04 | 2026-10-05 | Moving the plant to the garden after 6 months; generations; phases G0–G4 (G4 left) |
 | [plans/003-seasons.md](plans/003-seasons.md) | Plan | Draft (parked) | 2026-10-05 | 2026-10-05 | Seasons in the scenery, detected from the time zone (no permissions); options only, no decisions |
 | [plans/004-release-readiness.md](plans/004-release-readiness.md) | Plan | **Active** | 2026-10-05 | 2026-10-05 | Getting to "ready to share": visual regression for 24 scenes, missing UI / edge-case tests, release run (R0–R8) |
+| [plans/005-project-page.md](plans/005-project-page.md) | Plan | **Active** | 2026-10-05 | 2026-10-05 | marumado.danielkishimoto.com in the playground monorepo: own identity, product page + "how it was built" |
 
 Keep this table in sync whenever a doc is added, changes status, or is updated.
 

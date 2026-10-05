@@ -129,9 +129,11 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Seasons outside the window | ⬜ | Parked: [003 · seasons](plans/003-seasons.md) (options only) |
 | Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R2 ✅ (24 baselines approved); next R3 |
 | Public repo polish | 🟡 | ✅ .gitignore (zips, keys, scratch), machine-specific references removed from docs, README rewritten for visitors, CONTRIBUTING + issue/PR templates, `.nvmrc` + `engines`. ⬜ First GitHub Release with the zip (plan 004 R8) |
-| Project page | ⬜ | Proposal: `apps/marumado` in the playground monorepo → marumado.danielkishimoto.com, listed on playground.danielkishimoto.com. Decisions pending |
+| Project page | 🟡 | [005](plans/005-project-page.md): built locally (own identity, product page + how it was built, landing card 03); review + deploy pending |
 
 ## Log
+
+- 2026-10-05: plan 005 project page: built on a playground branch, not deployed yet.
 
 - 2026-10-05: public repo polish: gitignore, docs scrubbed of machine details, new README, CONTRIBUTING and templates.
 
