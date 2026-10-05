@@ -83,24 +83,14 @@ scene('S18', 'light mode with 8 in the garden (≤ 3 shown) · 11:00', { spec: {
 scene('S19', 'no WebGL: CSS window · 11:00', { spec: { history: 'healthy', currentCare: 64, garden: 2 }, hour: 11, args: ['--disable-3d-apis'] });
 scene('S20', '720×450 (200 % zoom) · 11:00', { spec: { history: 'healthy', currentCare: 64, garden: 2 }, hour: 11, viewport: { width: 720, height: 450 } });
 scene('S21', '480×820 narrow · 11:00', { spec: { history: 'healthy', currentCare: 30, garden: 1 }, hour: 11, viewport: { width: 480, height: 820 } });
-scene('S22', 'help modal (video at the wilted frame) · 11:00', {
+scene('S22', 'help modal, step 4 (stills: reduce motion) · 11:00', {
   spec: { history: 'healthy', currentCare: 64, garden: 2 },
   hour: 11,
   act: async (page) => {
     await page.click('#openHelp');
-    await page.evaluate(
-      () =>
-        new Promise<void>((resolve) => {
-          const v = document.getElementById('helpVideo') as HTMLVideoElement;
-          v.controls = false;
-          v.pause();
-          v.addEventListener('seeked', () => resolve(), { once: true });
-          v.preload = 'auto';
-          v.load();
-          v.addEventListener('loadeddata', () => (v.currentTime = 4.8), { once: true });
-        }),
-    );
-    await page.waitForTimeout(500);
+    await page.click('.help-dot >> nth=3');
+    await page.waitForFunction(() => [...document.querySelectorAll('.help-step:not([hidden]) img')].every((i) => (i as HTMLImageElement).complete));
+    await page.waitForTimeout(300);
   },
 });
 scene('S23', 'moving day with reduce motion: dialog right away · 11:00', { spec: { history: 'healthy', currentCare: 130 }, hour: 11 });

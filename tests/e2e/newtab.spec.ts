@@ -140,18 +140,26 @@ test('touch: tapping the collapsed plant pill opens it', async () => {
   await context.close();
 });
 
-test('help modal explains the app and plays the looping explainer video', async ({ context }, info) => {
+test('help modal: four steps with looping clips, credit link opens in a new tab', async ({ context }) => {
   const page = await newTab(context);
-  await seed(page, { plantName: 'Kiko' });
+  await seed(page);
   await page.click('#openHelp');
   await expect(page.locator('#help')).toBeVisible();
-  await expect(page.locator('#helpPoints')).toContainText('and Kiko grows');
-  const video = page.locator('#helpVideo');
+  await expect(page.locator('.help-intro')).toContainText('Small habits, kept every day');
+  const step = page.locator('.help-step:not([hidden])');
+  await expect(step).toContainText('One quick question');
+  const video = step.locator('video');
   await expect(video).toHaveJSProperty('loop', true);
-  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 10_000 }).toBeGreaterThan(0.5);
-  await page.waitForTimeout(3500); // land on the wilted part for the screenshot
-  await page.screenshot({ path: info.outputPath('help.png') });
-  await page.keyboard.press('Escape');
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 10_000 }).toBeGreaterThan(0.3);
+  await page.keyboard.press('ArrowRight');
+  await expect(step).toContainText('Say Yes and it grows');
+  await page.click('.help-dot >> nth=3');
+  await expect(step).toContainText('to the garden');
+  await expect(page.locator('#helpNext')).toHaveText('Got it');
+  const credit = page.locator('.help-foot a');
+  await expect(credit).toHaveAttribute('target', '_blank');
+  await expect(credit).toHaveAttribute('href', /danielkishimoto\.com\/\?utm_source=marumado&utm_medium=extension&utm_campaign=help_modal/);
+  await page.click('#helpNext'); // "Got it" closes
   await expect(page.locator('#help')).toBeHidden();
   await page.click('#ask .btn.primary'); // background is interactive again
   await expect.poll(() => storedEvents(page)).toBe(1);

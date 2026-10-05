@@ -98,7 +98,7 @@ interface GardenState {
 | G1 | Lab: garden scene, layout study (5 concepts → terraced, centre-out), generation styles | ✅ 2026-10-05 | Validated by the user from screenshots |
 | G2 | Engine + data: `engine/garden.ts` (compression, move, styles, garden growth/health), storage item, backup v2 | ✅ 2026-10-05 | Vitest 46 green in 3 time zones |
 | G3 | New tab: bigger window, terraced garden, garden plants, almost-ready, ceremony, new-seed dialog, flower colour in onboarding, help tile | ✅ 2026-10-05 | E2E 26/26 incl. move, two tabs, dialog after closing, backup v2 |
-| G4 | Re-render the explainer video (new growth labels) and the deck (+ "to the garden"); docs | 🟡 Explainer re-rendered (growth labels only, no garden yet), docs updated; **videos on hold** by the user (2026-10-05). Deck captions still use the old scale | Videos regenerated; docs updated |
+| G4 | Help videos and the deck (+ "to the garden"); docs | 🟡 Help modal now has 4 clips incl. the move and the garden (plan 004 §10). **Deck videos still pending** (captions use the old scale) | Videos regenerated; docs updated |
 
 ## 6. Risks
 

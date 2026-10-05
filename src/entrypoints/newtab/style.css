@@ -323,57 +323,104 @@ button {
 }
 
 .modal.help {
-  width: min(1180px, 94vw);
+  width: min(980px, 94vw);
   max-height: calc(100vh - 24px);
-  padding: 28px 32px 30px;
+  padding: 26px 30px 20px;
 }
 
 .help-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .modal.help h2 {
-  font-size: 30px;
+  font-size: 28px;
 }
 
-.help video {
+.help-intro {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.help-intro b {
+  color: var(--ink);
+}
+
+.help-media video,
+.help-media img {
+  /* Whole frame always visible (the clips carry a time tag in their top-left corner). */
   display: block;
-  /* Width follows the available height, so the video is never letterboxed. */
-  width: min(100%, calc((100vh - 300px) * 1600 / 760));
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(100vh - 380px);
+  aspect-ratio: 16 / 9;
   margin: 0 auto;
-  aspect-ratio: 1600 / 760;
-  border-radius: 16px;
+  border-radius: 14px;
   background: #cdbb9e;
 }
 
-.help-points {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 14px 20px;
-  margin: 24px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.help-points li {
-  padding-left: 12px;
-  border-left: 3px solid var(--accent);
-}
-
-.help-points strong {
-  display: block;
+.help-line {
+  min-height: 3em;
+  margin: 14px 4px 6px;
   color: var(--ink);
   font-size: 18px;
-  font-weight: 650;
-  line-height: 1.25;
+  line-height: 1.45;
 }
 
-.help-points span {
+.help-num {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+  vertical-align: 2px;
+}
+
+.help-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.help-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.help-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--line);
+  cursor: pointer;
+}
+
+.help-dot[aria-selected='true'] {
+  background: var(--accent);
+}
+
+.help-foot {
+  margin: 14px 0 0;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.help-foot a {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* --- Needs ----------------------------------------------------------------------------- */

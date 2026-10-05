@@ -39,7 +39,8 @@ Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpack
 | `npm run test:e2e` | Builds, then runs Playwright against the real unpacked extension |
 | `npm run lab` | Plant lab (plain Vite page, not shipped): tune the ajisai's growth × health |
 | `npm run render:deck` | Renders the 3 deck videos (growth, neglect, recovery) to `deck-videos/`; needs `ffmpeg` |
-| `npm run render:explainer` | Re-renders `public/media/explainer.webm` (help modal video) from the lab; needs `ffmpeg` |
+| `npm run render:help` | Renders the help modal's 4 looping clips (`public/media/help-*.webm` + stills) from the real page; needs `ffmpeg` |
+| `npm run test:visual` | Visual regression: 24 scenes on the dev build (`npm run visual:sheet` builds a review page) |
 
 In dev mode (`npm run dev`) the new tab shows **Dev controls** (sky hour, plant age/health preview, erase data) and accepts `?hour=22&day=180&health=0.4`. Production builds strip them.
 

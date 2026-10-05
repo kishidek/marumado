@@ -9,6 +9,7 @@ import {
   isGardenTime,
   lookDays,
   pottedPlantDays,
+  styleFor,
   visibleGarden,
 } from '../../engine/garden';
 import { computeState, potNumber, type Checkpoint, type PlantState } from '../../engine/model';
@@ -165,7 +166,11 @@ let moving = false;
 /** Check for a move once per tab open / tab shown, never right after an answer. */
 let gardenCheck = true;
 
+/** Dev-only: a scripted garden for video renders replaces the stored one while set. */
+let previewGarden: { build: AjisaiBuild; slot: number }[] | null = null;
+
 function renderGarden() {
+  if (previewGarden) return;
   if (!settings || !state) {
     for (const entry of gardenBuilds.values()) entry.build.dispose();
     gardenBuilds.clear();
@@ -626,6 +631,25 @@ if (DEV) {
       frame(dt: number) {
         view.update(dt);
         gl.render(view.scene, view.camera);
+      },
+      /** Scripted garden: [{ look, flowers, generation }] (generation picks slot, leaves, pot, shape). */
+      garden(list: { look: number; flowers: PlantStyle['flowers']; generation: number }[]) {
+        previewGarden?.forEach((p) => p.build.dispose());
+        previewGarden = list.map((p) => ({
+          build: buildAjisai({ days: p.look, health: 1, style: styleFor(p.generation, p.flowers), seed: seedFor(p.generation), potted: false, detail: 'low' }),
+          slot: p.generation % GARDEN.slots,
+        }));
+        view.setGarden(previewGarden);
+      },
+      /** Move ceremony on demand: the full potted plant flies to `slot`; the pot gets a sprout. */
+      fly(slot = 0) {
+        const style = settings ? garden().current.style : undefined;
+        const flyer = buildAjisai({ days: GARDEN.fullLook, health: 1, style, seed: seedFor(settings ? garden().moved.length : 0), potted: false, detail: 'low' });
+        for (const c of flyer.group.children) if (c instanceof THREE.Mesh) c.visible = false;
+        view.holdFraming(true);
+        preview.days = 0;
+        updatePlant();
+        view.flyToGarden(flyer, slot, () => undefined);
       },
     },
   });

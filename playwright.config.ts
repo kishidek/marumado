@@ -14,7 +14,9 @@ export default defineConfig({
   // lantern pass unnoticed (bug #29), so the margin is a fixed, tiny pixel count.
   expect: { toHaveScreenshot: { maxDiffPixels: 50, animations: 'disabled' } },
   projects: [
-    { name: 'functional', testIgnore: /visual\/.*/ },
+    { name: 'functional', testIgnore: /(visual|clips)\/.*/ },
     { name: 'visual', testMatch: /visual\/.*\.spec\.ts/ },
+    // Not tests: renders the help modal's clips (`npm run render:help`).
+    { name: 'clips', testMatch: /clips\/.*\.spec\.ts/, timeout: 600_000 },
   ],
 });

@@ -41,9 +41,11 @@ export interface ScenarioSpec {
   reduceMotion?: boolean;
   /** Answer "Later" to everything at hour − 10 min, so no card is due (no incidental card). */
   snoozedNow?: boolean;
+  /** Habits (default: water, stretch, eyes). */
+  habits?: { id: string; intervalMin: number }[];
 }
 
-const HABITS = [
+const DEFAULT_HABITS = [
   { id: 'water', intervalMin: 120 },
   { id: 'stretch', intervalMin: 60 },
   { id: 'eyes', intervalMin: 30 },
@@ -53,6 +55,7 @@ const styleFor = (gen: number) => ({ flowers: FLOWERS[gen % 4]!, leaves: gen % 4
 
 /** Builds settings + checkpoint + events + garden for a scene. */
 export function buildScenario(spec: ScenarioSpec, now: number) {
+  const HABITS = spec.habits ?? DEFAULT_HABITS;
   let n = 0;
   const ev = (ts: number, habitId: string, answer: 'yes' | 'no' | 'later') => ({ id: `v${n++}`, ts, tz: TZ, habitId, answer });
   const events: ReturnType<typeof ev>[] = [];

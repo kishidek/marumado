@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Active** · R1 ✅; R2 baselines generated, **waiting for the user's review** of the sheet |
+| **Status** | **Active** · R1 ✅; R2 under review: S08 fixed (#30), S22 redesigned (help modal with clips); waiting for final approval |
 | **Created** | 2026-10-05 |
 | **Updated** | 2026-10-05 |
 | **Supersedes** | — |
@@ -148,3 +148,11 @@ Health words below are what the scene **shows**, produced by an explicit history
 | SwiftShader frame times aren't meaningful | Wrong assumption (R7) | Frame budgets manual on a real GPU; automated check is memory (disposed builds) |
 | `package.json` is 0.1.0; manifest version comes from it | Gap (R8) | Bump to 0.2.0 before tagging |
 | qa.md counts were rough (~70 / 32 / 16 / 18) | Inconsistency | Recounted: 62 cases → 28 ✅, 15 🟡, 19 ⬜; scenarios 3 / 9 / 12 |
+
+## 10. Help modal redesign (from the S22 review, 2026-10-05)
+
+Decided with the user: four steps with looping clips of the real scene (1A card + cursor taps Yes + drops · 2A sprout → 6 months · 3A wilt → care → recovery · 4B flight to the garden, then the garden filling over years); an intro about why healthy habits matter instead of the plant's status (it read like onboarding); credit "Made by Daniel Kishimoto" → danielkishimoto.com with UTMs (`utm_source=marumado&utm_medium=extension&utm_campaign=help_modal&utm_content=credit`), opens in a new tab.
+
+- Clips: `npm run render:help` (`tests/e2e/clips/help-clips.spec.ts`, Playwright project `clips`), frame-exact from the dev build with `__marumado.frame`, `set`, `cheer`, `garden` and `fly`; VP9 WebM + JPEG stills for reduce motion; review copies (MP4) in `.output/TEMP - help-clips/`. ~1.6 MB with stills.
+- The old explainer video and its script were removed.
+- Guards: functional E2E "help modal: four steps…" and visual S22 (step 4, stills).

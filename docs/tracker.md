@@ -107,7 +107,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Current plant's colour / generation | ✅ | Settings → Your plant: swatch, "Generation N", when it will move |
 | Start over / Restore mention the garden | ✅ | Dialogs say the garden is erased / replaced, with counts |
 | Help modal | ✅ | 6 tiles in one row ("Skip it · it droops, but never dies"; "After 6 months · it moves to the garden") |
-| Help video shows the garden | ⬜ | Waits for the video work (G4), on hold by user's request |
+| Help video shows the garden | ✅ | Help modal redesigned: 4 steps with looping clips (plan 004 §10) |
 
 ## Missing pieces (plan §6)
 
@@ -130,6 +130,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R1 ✅; R2 baselines done, user review pending; next R3 |
 
 ## Log
+
+- 2026-10-05: help modal redesigned: intro on healthy habits, 4 steps with looping clips of the real scene (incl. move + garden), credit link with UTMs; old explainer removed.
 
 - 2026-10-05: user review of baselines: S08 flight fixed (#30); S22 help content to be redesigned.
 

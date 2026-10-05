@@ -20,7 +20,7 @@ const HEALTH_PRESETS = [
 
 // URL params make any state linkable/screenshot-able: ?days=90&health=0.5&grid=1
 const params = new URLSearchParams(location.search);
-/** ?clean=1 hides the panel and centres the scene (used to render the explainer video). */
+/** ?clean=1 hides the panel and centres the scene (clean screenshots of the plant). */
 const CLEAN = params.get('clean') === '1';
 if (CLEAN) document.documentElement.classList.add('clean');
 const state = {

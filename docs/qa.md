@@ -139,7 +139,7 @@ The full product is thousands of combinations; this list covers every value of e
 | S19 | Healthy | 3 mo | 2 | 11 h | No WebGL | CSS window | ✅ baseline (review pending) |
 | S20 | Healthy | 3 mo | 2 | 11 h | 720×450 (200 %) | Card + pill | ✅ baseline (review pending) |
 | S21 | Healthy | 6 w | 1 | 11 h | 480×820 | Card + pill | ✅ baseline (review pending) |
-| S22 | Healthy | 3 mo | 2 | 11 h | 1440 | Help modal (video) | ✅ baseline (review pending) |
+| S22 | Healthy | 3 mo | 2 | 11 h | 1440 | Help modal, step 4 (stills) | ✅ baseline (review pending) |
 | S23 | Healthy | Moving day | 0 → 1 | 11 h | Reduce motion | Dialog directly | ✅ baseline (review pending) |
 | S24 | Wilted | 5 mo (gen 2) | 1 | 18 h | 1440 | Garden + wilted pot side by side | ✅ baseline (review pending) |
 
