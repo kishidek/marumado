@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Active** · decided 2026-10-05; page built on a branch of the playground repo, waiting for review before deploy |
+| **Status** | **Done** · live at https://marumado.danielkishimoto.com since 2026-10-05 |
 | **Created** | 2026-10-05 |
 | **Updated** | 2026-10-05 |
 | **Supersedes** | — |
@@ -38,11 +38,11 @@ A public page that shows what Marumado is, lets people install it, and points to
 |---|---|---|
 | P1 | Build `apps/marumado` on branch `marumado-page` of the playground repo (local commit, not pushed); copy clips and stills | ✅ 2026-10-05 |
 | P2 | Landing card (case 03) + grey thumbnail | ✅ 2026-10-05 |
-| P3 | Local preview (desktop, mobile, reduced motion) and review by the user | ⏳ screenshots in `.output/TEMP - project-page/` |
-| P4 | Merge to `main` → auto-deploy; check the subdomain and the landing | ⬜ (needs the user's go-ahead: it publishes) |
-| P5 | First GitHub Release with the zip, so "Get it" works (plan 004 R8) | ⬜ |
+| P3 | Local preview (desktop, mobile, reduced motion) and review by the user | ✅ 2026-10-05 |
+| P4 | Merge to `main` → auto-deploy; check the subdomain and the landing | ✅ 2026-10-05: deploy run green (`_landing` + `marumado`), page, media and landing card return 200 |
+| P5 | First GitHub Release with the zip, so "Get it" works | ✅ v0.2.0 pre-release |
 
 ## 5. Notes
 
 - Media is copied, not linked: if the clips are re-rendered (`npm run render:help`), copy them again into `apps/marumado/public/media/`.
-- Until P5 the install button points at the Releases page, which will be empty: either ship P5 first or have the button say "Build from source" until then.
+- v0.2.0 was released before the page went live, so "Get it on GitHub" never pointed at an empty page.

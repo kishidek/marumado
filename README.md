@@ -2,6 +2,7 @@
 
 **A tiny ajisai (hydrangea) on a Kyoto windowsill that grows with your healthy work habits.**
 A new-tab extension for Chrome and Edge. Free, open source, and nothing ever leaves your browser.
+**[marumado.danielkishimoto.com](https://marumado.danielkishimoto.com/?utm_source=github&utm_medium=readme&utm_campaign=marumado&utm_content=site)** · [Download the latest release](../../releases)
 
 ![An evening view through the round window: a potted ajisai on the sill and earlier generations blooming in the garden outside](tests/e2e/visual/scenes.spec.ts-snapshots/S12-visual-darwin.png)
 

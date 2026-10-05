@@ -129,9 +129,11 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Seasons outside the window | ⬜ | Parked: [003 · seasons](plans/003-seasons.md) (options only) |
 | Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R2 ✅; **v0.2.0 pre-release out**; R3–R7 → v0.3.0 |
 | Public repo polish | ✅ | ✅ .gitignore (zips, keys, scratch), machine-specific references removed from docs, README rewritten for visitors, CONTRIBUTING + issue/PR templates, `.nvmrc` + `engines`. ✅ First GitHub Release v0.2.0 (pre-release) with the zip |
-| Project page | 🟡 | [005](plans/005-project-page.md): built locally (own identity, product page + how it was built, landing card 03); review + deploy pending |
+| Project page | ✅ | [005](plans/005-project-page.md): live at https://marumado.danielkishimoto.com, listed as case 03 on playground |
 
 ## Log
+
+- 2026-10-05: project page live (marumado.danielkishimoto.com) and on the playground landing.
 
 - 2026-10-05: **v0.2.0 released (pre-release)** on GitHub with `marumado-0.2.0-chrome.zip`; all suites green.
 
