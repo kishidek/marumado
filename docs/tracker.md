@@ -14,7 +14,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | P2 risks | 6 / 6 ✅ |
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
 | Bugs | 27 fixed · 0 open |
-| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 |
+| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 · visual regression 0 · coverage and gaps: [qa.md](qa.md) |
 | Left | Garden: videos (G4, on hold). Post-MVP: holidays, mood / caffeine habits, seasons (parked plan 003) |
 
 ## Phases
@@ -129,6 +129,8 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Seasons outside the window | ⬜ | Parked: [003 · seasons](plans/003-seasons.md) (options only) |
 
 ## Log
+
+- 2026-10-05: QA audit: `docs/qa.md` with cases, scenario matrix S01–S24 and gaps; main gap: no automated visual tests.
 
 - 2026-10-05: seasons idea parked as plan 003 (draft).
 

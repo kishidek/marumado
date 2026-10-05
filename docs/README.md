@@ -15,6 +15,7 @@ Everything about how Marumado is planned, built and tracked. **Start here.**
 |---|---|---|---|---|---|
 | [tracker.md](tracker.md) | Living | Current | 2026-10-03 | 2026-10-05 | Status of every phase, risk and open item; dated log of changes |
 | [bugs.md](bugs.md) | Living | Current | 2026-10-04 | 2026-10-05 | Every bug: severity, symptom, cause, fix, guard, commit (27 fixed, 0 open) |
+| [qa.md](qa.md) | Living | Current | 2026-10-05 | 2026-10-05 | Test inventory, common / edge cases with coverage, plant scenario matrix (S01–S24), gaps and release checklist |
 | [plans/001-mvp-wxt.md](plans/001-mvp-wxt.md) | Plan | **Done** (frozen) | 2026-10-03 | 2026-10-04 | MVP: port to WXT, engine, risks, decisions 1–15. Ends with *Known deviations* |
 | [plans/002-garden.md](plans/002-garden.md) | Plan | **Active** | 2026-10-04 | 2026-10-05 | Moving the plant to the garden after 6 months; generations; phases G0–G4 (G4 left) |
 | [plans/003-seasons.md](plans/003-seasons.md) | Plan | Draft (parked) | 2026-10-05 | 2026-10-05 | Seasons in the scenery, detected from the time zone (no permissions); options only, no decisions |
@@ -25,7 +26,7 @@ Keep this table in sync whenever a doc is added, changes status, or is updated.
 
 | Kind | Where / name | Rules |
 |---|---|---|
-| **Living** | `docs/<name>.md`, fixed lowercase name (`tracker.md`, `bugs.md`) | Always describes *now*. Never numbered, never superseded; old content moves to its log/history section instead of being deleted |
+| **Living** | `docs/<name>.md`, fixed lowercase name (`tracker.md`, `bugs.md`, `qa.md`) | Always describes *now*. Never numbered, never superseded; old content moves to its log/history section instead of being deleted |
 | **Plan** | `docs/plans/NNN-<slug>.md` (`001-mvp-wxt.md`) | `NNN` = creation order, three digits, never reused: **lower number = older**. Short kebab-case slug. A plan is never renamed or renumbered; only its status changes |
 | **Index** | `docs/README.md` | This file |
 
