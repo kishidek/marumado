@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Active** · R0–R2 ✅ (24 baselines approved by the user 2026-10-05); next R3 |
+| **Status** | **Active** · R0–R2 ✅; **v0.2.0 released as a pre-release** (2026-10-05, user's call); R3–R7 → v0.3.0 |
 | **Created** | 2026-10-05 |
 | **Updated** | 2026-10-05 |
 | **Supersedes** | — |
@@ -162,3 +162,7 @@ Decided with the user: four steps with looping clips of the real scene (1A card 
 Unpacked extensions get an ID derived from their folder path, and their storage follows the ID: unzipping a new release elsewhere would silently lose the plant. The manifest now carries a public `key`, pinning the ID to `libfkdleonljckjnpocjmkoccmafebmb` (E2E guards it). The private key lives outside the repo (author's machine, `*.pem` is gitignored). The Chrome Web Store rejects the `key` field: strip it for a store upload if we publish there later.
 
 Migration for existing installs (the author's): export a backup, update, restore.
+
+## 12. v0.2.0 pre-release (2026-10-05)
+
+The user chose to ship a **pre-release** now instead of waiting for R3–R7, which move to v0.3.0. Checks run for it: compile; Vitest 46 × 3 time zones; E2E 28/28 (incl. pinned ID); visual 24/24; the release zip unzipped to an arbitrary folder installs with the pinned ID, shows onboarding and renders 3D with no errors; production bundle has no dev controls. Pending manual: install in Chrome (Edge done), the author's data migration (export → update → restore).

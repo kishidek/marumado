@@ -14,7 +14,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | P2 risks | 6 / 6 ✅ |
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
 | Bugs | 30 fixed · 0 open |
-| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 · visual regression 24 scenes (approved) · coverage and gaps: [qa.md](qa.md) |
+| Tests | Vitest 46 (× 3 time zones) · Playwright E2E 28 · visual regression 24 scenes (approved) · coverage and gaps: [qa.md](qa.md) |
 | Left | **Release readiness (plan 004: R3–R8)** · public repo polish (gitignore, README, project page) · garden deck videos (G4). Post-MVP: holidays, mood / caffeine habits, seasons (parked plan 003) |
 
 ## Phases
@@ -127,11 +127,13 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Holidays / days off beyond weekends | ⬜ |
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 | Seasons outside the window | ⬜ | Parked: [003 · seasons](plans/003-seasons.md) (options only) |
-| Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R2 ✅ (24 baselines approved); next R3 |
-| Public repo polish | 🟡 | ✅ .gitignore (zips, keys, scratch), machine-specific references removed from docs, README rewritten for visitors, CONTRIBUTING + issue/PR templates, `.nvmrc` + `engines`. ⬜ First GitHub Release with the zip (plan 004 R8) |
+| Release readiness (tests + visuals) | 🟡 | [004](plans/004-release-readiness.md): R0–R2 ✅; **v0.2.0 pre-release out**; R3–R7 → v0.3.0 |
+| Public repo polish | ✅ | ✅ .gitignore (zips, keys, scratch), machine-specific references removed from docs, README rewritten for visitors, CONTRIBUTING + issue/PR templates, `.nvmrc` + `engines`. ✅ First GitHub Release v0.2.0 (pre-release) with the zip |
 | Project page | 🟡 | [005](plans/005-project-page.md): built locally (own identity, product page + how it was built, landing card 03); review + deploy pending |
 
 ## Log
+
+- 2026-10-05: **v0.2.0 released (pre-release)** on GitHub with `marumado-0.2.0-chrome.zip`; all suites green.
 
 - 2026-10-05: manifest key pins the extension ID (unpacked updates keep their data); install path A (Releases zip) chosen.
 
