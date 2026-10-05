@@ -19,6 +19,7 @@ Everything about how Marumado is planned, built and tracked. **Start here.**
 | [plans/001-mvp-wxt.md](plans/001-mvp-wxt.md) | Plan | **Done** (frozen) | 2026-10-03 | 2026-10-04 | MVP: port to WXT, engine, risks, decisions 1–15. Ends with *Known deviations* |
 | [plans/002-garden.md](plans/002-garden.md) | Plan | **Active** | 2026-10-04 | 2026-10-05 | Moving the plant to the garden after 6 months; generations; phases G0–G4 (G4 left) |
 | [plans/003-seasons.md](plans/003-seasons.md) | Plan | Draft (parked) | 2026-10-05 | 2026-10-05 | Seasons in the scenery, detected from the time zone (no permissions); options only, no decisions |
+| [plans/004-release-readiness.md](plans/004-release-readiness.md) | Plan | **Active** | 2026-10-05 | 2026-10-05 | Getting to "ready to share": visual regression for 24 scenes, missing UI / edge-case tests, release run (R0–R8) |
 
 Keep this table in sync whenever a doc is added, changes status, or is updated.
 

@@ -143,6 +143,8 @@ The full product is thousands of combinations; this list covers every value of e
 
 ## 4. Gaps to close before sharing (priority)
 
+Planned in detail in [004 · release readiness](plans/004-release-readiness.md) (phases R1–R8).
+
 1. **Visual regression for S01–S24**: Playwright `toHaveScreenshot` on the dev build with frozen time (`page.clock`) and seeded data (reuse `seed`, `seedSixMonths`, the simulator and the dev `__marumado` hooks). One baseline per scenario, reviewed by eye once, then guarded.
 2. **UI assertions for engine-only cases**: off-hours / vacation / daily cap / overnight / almost ready / anti-farming toast / Later.
 3. **Garden edge cases**: Escape on the new-seed dialog, light-mode cap, start over erases the garden, pre-move restore, 9th plant slot.

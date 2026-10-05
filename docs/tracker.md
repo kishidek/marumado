@@ -15,7 +15,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Missing pieces (plan §6) | 4 / 5 ✅ · beta channel ⏸️ (needs the store) |
 | Bugs | 27 fixed · 0 open |
 | Tests | Vitest 46 (× 3 time zones) · Playwright E2E 27 · visual regression 0 · coverage and gaps: [qa.md](qa.md) |
-| Left | Garden: videos (G4, on hold). Post-MVP: holidays, mood / caffeine habits, seasons (parked plan 003) |
+| Left | **Release readiness (plan 004, next)**. Garden videos (G4, on hold). Post-MVP: holidays, mood / caffeine habits, seasons (parked plan 003) |
 
 ## Phases
 
@@ -127,8 +127,11 @@ Legend: ✅ done · 🟡 partial · ⬜ not started · ⏸️ postponed
 | Holidays / days off beyond weekends | ⬜ |
 | Mood check (scale) and caffeine (inverted) habits | ⬜ |
 | Seasons outside the window | ⬜ | Parked: [003 · seasons](plans/003-seasons.md) (options only) |
+| Release readiness (tests + visuals) | ⬜ | [004](plans/004-release-readiness.md): R0 ✅ plan; next R1 visual harness |
 
 ## Log
+
+- 2026-10-05: plan 004 (release readiness) written: visual harness, 24 scenario baselines, missing UI / edge cases, release run.
 
 - 2026-10-05: QA audit: `docs/qa.md` with cases, scenario matrix S01–S24 and gaps; main gap: no automated visual tests.
 
